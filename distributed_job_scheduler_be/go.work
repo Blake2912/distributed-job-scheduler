@@ -1,0 +1,10 @@
+go 1.25.5
+
+use (
+	./core/job_execution
+	./core/leaders
+	./core/pod_library
+	./core/worker
+	./dal/redis_dal
+	./dal/sql_dal
+)
