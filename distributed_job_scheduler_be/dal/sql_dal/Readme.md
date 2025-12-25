@@ -4,7 +4,7 @@
 1. Docker
 2. Postgres image installed on Docker
 
-## Setup instructions
+## Initial Database Setup instructions
 Create a `.env` file inside the `sql_dal` folder and add the following contents
 ```
 POSTGRES_DB=<your-database-name>
