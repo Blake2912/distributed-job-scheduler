@@ -20,10 +20,3 @@ func List(ctx context.Context, c *client.K8sClient, namespace string) ([]corev1.
 
 	return pods.Items, nil
 }
-
-func Create(ctx context.Context, c *client.K8sClient, namespace string, pod *corev1.Pod) (*corev1.Pod, error) {
-	return c.Clientset.
-		CoreV1().
-		Pods(namespace).
-		Create(ctx, pod, metav1.CreateOptions{})
-}
