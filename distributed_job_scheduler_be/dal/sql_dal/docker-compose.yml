@@ -1,6 +1,6 @@
 services:
   db:
-    image: postgres:latest
+    image: postgres:18
     container_name: postgres-db
     restart: unless-stopped
     environment:
