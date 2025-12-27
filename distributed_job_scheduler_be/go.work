@@ -6,6 +6,5 @@ use (
 	./core/pod_library
 	./core/test
 	./core/worker
-	./dal/redis_dal
-	./dal/sql_dal
+	./dal
 )

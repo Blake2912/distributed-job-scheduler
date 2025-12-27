@@ -3,7 +3,7 @@ package config
 import (
 	"log"
 
-	datamodels "example.com/sql_dal/data_models"
+	datamodels "example.com/dal/sql_dal/data_models"
 	"gorm.io/gorm"
 )
 
