@@ -16,6 +16,7 @@ Open a terminal session inside `sql_dal` folder and Run
 ```
 docker compose up -d
 ```
+The above command will pick the instructions from the `docker-compose.yml` file and create the database locally
 
 Check if the volume and the container is created then you are gtg.
 
