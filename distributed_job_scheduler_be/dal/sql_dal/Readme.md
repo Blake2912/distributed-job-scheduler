@@ -34,7 +34,7 @@ DB_SSLMODE=disable
 
 `DB_HOST=localhost` is for local testing only.
 
-## Code Strucutre
+## Code Strucutre/Standards to follow
 * The `config/` folder contains the code for establishing the database connection, and migrating datamodels into the database.
 * Add your datamodels inside the `data_models/` folders and keep the database queries inside the data model file itself.
 * Once you have added the data models then make changes in the `config/migrations.go` file to ensure the data models are migrated
