@@ -34,9 +34,9 @@ func ConnectDB() {
 	log.Println("Database connected")
 }
 
-func CloseSqlConnection(sql *sql.DB){
-	err := sql.Close();
-	if err != nil{
+func CloseSqlConnection(sql *sql.DB) {
+	err := sql.Close()
+	if err != nil {
 		log.Println("Error in closing sql connection", err)
 	}
 }
