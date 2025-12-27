@@ -2,7 +2,6 @@
 
 ## Pre-requisites
 1. Docker
-2. Postgres image installed on Docker
 
 ## Initial Database and Redis Setup instructions
 Create a `.env` file inside the `dal` folder and add the following contents
