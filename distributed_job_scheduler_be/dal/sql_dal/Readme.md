@@ -23,7 +23,7 @@ Check if the volume and the container is created then you are gtg.
 Connect to the database via any db connection application
 
 ## How to connect sql_dal App to Database
-In the `.env` file all the following contents
+In the `.env` file add the following contents
 ```
 DB_HOST=localhost
 DB_PORT=5432
