@@ -3,39 +3,35 @@ package main
 import (
 	"fmt"
 	"log"
-	"os"
+	"net/http"
 
 	"example.com/sql_dal/config"
-	"gorm.io/driver/postgres"
-	"gorm.io/gorm"
+	"github.com/gin-gonic/gin"
 )
 
-// TODO:: Ensure LoadEnv is called only in dev envs.. need to create separate envs for dev and prod
 func main() {
-	config.LoadEnv()
-	fmt.Println("Starting to connect to database")
+	config.ConnectDB()
 
-	db, err := Connect()
+	sql, err := config.DB.DB()
+
 	if err != nil {
 		log.Fatal(err)
 	}
+	// Ensures that we close the connection always when application shuts down
+	defer config.CloseSqlConnection(sql)
 
-	fmt.Println("Connected to Postgres via GORM")
+	err = config.Migrate(config.DB)
+	if err != nil {
+		log.Fatal("Error occurred during migration", err)
+	}
+	log.Println("Migrations completed")
 	
-	fmt.Println(db.DB())
-
+	router := gin.Default()
+	router.GET("hello/", hello)
+	router.Run("localhost:8081")
 }
 
-func Connect() (*gorm.DB, error) {
-	dsn := fmt.Sprintf(
-		"host=%s user=%s password=%s dbname=%s port=%s sslmode=%s",
-		os.Getenv("DB_HOST"),
-		os.Getenv("DB_USER"),
-		os.Getenv("DB_PASSWORD"),
-		os.Getenv("DB_NAME"),
-		os.Getenv("DB_PORT"),
-		os.Getenv("DB_SSLMODE"),
-	)
-
-	return gorm.Open(postgres.Open(dsn), &gorm.Config{})
+func hello(c *gin.Context){
+	msg := fmt.Sprintln("Hello")
+	c.IndentedJSON(http.StatusOK, msg)
 }

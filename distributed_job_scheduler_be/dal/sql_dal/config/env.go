@@ -8,6 +8,6 @@ import (
 
 func LoadEnv() {
 	if err := godotenv.Load(); err != nil {
-		log.Println("No .env file found (using system env)")
+		log.Fatal("No .env file found (using system env)")
 	}
 }
