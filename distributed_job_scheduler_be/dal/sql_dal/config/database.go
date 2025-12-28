@@ -1,6 +1,7 @@
 package config
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 	"log"
@@ -11,8 +12,9 @@ import (
 )
 
 var DB *gorm.DB
+var sqlDB *sql.DB
 
-func ConnectDB() {
+func ConnectDB(ctx context.Context) error {
 
 	LoadEnv()
 	dsn := fmt.Sprintf(
@@ -27,16 +29,26 @@ func ConnectDB() {
 	database, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 
 	if err != nil {
-		log.Fatal("Failed to connect to database:", err)
+		return fmt.Errorf("Failed to connect to database: %w", err)
+	}
+
+	sqlDB, err = DB.DB()
+	if err != nil {
+		return fmt.Errorf("get sql db failed: %w", err)
+	}
+
+	// Enforce connection timeout
+	if err := sqlDB.PingContext(ctx); err != nil {
+		return fmt.Errorf("db ping timeout: %w", err)
 	}
 
 	DB = database
 	log.Println("Database connected")
+	return nil
 }
 
-func CloseSqlConnection(sql *sql.DB) {
-	err := sql.Close()
-	if err != nil {
+func CloseSqlConnection() {
+	if err := sqlDB.Close(); err != nil {
 		log.Println("Error in closing sql connection", err)
 	}
 }

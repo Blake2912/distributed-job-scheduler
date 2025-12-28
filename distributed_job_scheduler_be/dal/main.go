@@ -1,9 +1,13 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
 	"time"
 
 	"example.com/dal/redis_dal/redisclient"
@@ -13,26 +17,29 @@ import (
 )
 
 func main() {
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
+
 	//connect Db
-	config.ConnectDB()
+	dbCtx, dbCancel := context.WithTimeout(ctx, 60*time.Second)
+	defer dbCancel()
 
-	sql, err := config.DB.DB()
-
-	if err != nil {
+	if err := config.ConnectDB(dbCtx); err != nil {
 		log.Fatal(err)
 	}
-	// Ensures that we close the connection always when application shuts down
-	defer config.CloseSqlConnection(sql)
+	defer config.CloseSqlConnection()
 
-	//run migrations
-	err = config.Migrate(config.DB)
-	if err != nil {
-		log.Fatal("Error occurred during migration", err)
+	// Run migrations -
+	// Improvements, possibility of race conditions as multiple pods can be spwanned ensure its run only once
+	if err := config.Migrate(dbCtx, config.DB); err != nil {
+		log.Fatal(err)
 	}
-	log.Println("Migrations completed")
 
 	//connect redis
-	rdb, err := redisclient.New()
+	redisCtx, rediscancel := context.WithTimeout(ctx, 20*time.Second)
+	defer rediscancel()
+
+	rdb, err := redisclient.New(redisCtx)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -43,7 +50,29 @@ func main() {
 	router := gin.Default()
 	router.GET("hello/", hello)
 	router.GET("helloRedis/", redisTest(rdb))
-	router.Run("localhost:8081")
+
+	srv := &http.Server{
+		Addr:    ":8081",
+		Handler: router,
+	}
+
+	go func() {
+		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			log.Fatal("Server error:", err)
+		}
+	}()
+
+	<-ctx.Done()
+	log.Println("Shutdown signal received")
+
+	shutdownCtx, shutDownCancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer shutDownCancel()
+
+	if err := srv.Shutdown(shutdownCtx); err != nil {
+		log.Println("Server forced to shutdown:", err)
+	}
+
+	log.Println("Server exited cleanly")
 }
 
 func hello(c *gin.Context) {

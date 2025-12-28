@@ -7,7 +7,7 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
-func New() (*redis.Client, error) {
+func New(ctx context.Context) (*redis.Client, error) {
 	addr, found := os.LookupEnv("REDIS_ADDR")
 	if !found {
 		addr = "localhost:6379"
@@ -17,7 +17,7 @@ func New() (*redis.Client, error) {
 		Addr: addr,
 	})
 
-	if err := rdb.Ping(context.Background()).Err(); err != nil {
+	if err := rdb.Ping(ctx).Err(); err != nil {
 		return nil, err
 	}
 
