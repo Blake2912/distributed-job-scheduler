@@ -8,8 +8,8 @@ import (
 )
 
 func New(ctx context.Context) (*redis.Client, error) {
-	addr := os.Getenv("REDIS_ADDR")
-	if addr == "" {
+	addr, found := os.LookupEnv("REDIS_ADDR")
+	if !found {
 		addr = "localhost:6379"
 	}
 
