@@ -1,6 +1,8 @@
 package config
 
 import (
+	"context"
+	"fmt"
 	"log"
 
 	datamodels "example.com/dal/sql_dal/datamodels"
@@ -14,12 +16,11 @@ var allModels = []any{
 	&datamodels.JobExecution{},
 }
 
-func Migrate(database *gorm.DB) error {
-	err := database.AutoMigrate(allModels...)
-	if err != nil {
-		log.Fatal("Migration failed:", err)
-		return err
+func Migrate(ctx context.Context, database *gorm.DB) error {
+	if err := database.WithContext(ctx).AutoMigrate(allModels...); err != nil {
+		return fmt.Errorf("Migration failed: %w", err)
 	}
 
+	log.Println("Database migrations have been applied successfully")
 	return nil
 }
