@@ -4,7 +4,7 @@ import (
 	"net/http"
 
 	databaseconstants "example.com/constants/database_constants"
-	imageservice "example.com/dal/internal/service/image_service"
+	imageservice "example.com/dal/internal/services/image_service"
 	"example.com/dal/sql_dal/models"
 	"github.com/gin-gonic/gin"
 )
