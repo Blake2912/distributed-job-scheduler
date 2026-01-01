@@ -1,4 +1,4 @@
-package datamodels
+package models
 
 import (
 	"time"
@@ -8,8 +8,8 @@ import (
 
 type JobExecution struct {
 	gorm.Model
-	ID          uint
-	JobID       uint
+
+	JobID       uint   `gorm:"index"`
 	Status      string `gorm:"type:varchar(50)"`
 	StartedAt   time.Time
 	CompletedAt time.Time

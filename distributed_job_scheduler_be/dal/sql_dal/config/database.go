@@ -32,7 +32,7 @@ func ConnectDB(ctx context.Context) error {
 		return fmt.Errorf("Failed to connect to database: %w", err)
 	}
 
-	sqlDB, err = DB.DB()
+	sqlDB, err = database.DB()
 	if err != nil {
 		return fmt.Errorf("get sql db failed: %w", err)
 	}

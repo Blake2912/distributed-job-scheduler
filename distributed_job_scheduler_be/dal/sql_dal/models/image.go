@@ -1,8 +1,6 @@
-package datamodels
+package models
 
 import (
-	"time"
-
 	databaseconstants "example.com/constants/database_constants"
 	"gorm.io/gorm"
 )
@@ -12,9 +10,7 @@ import (
 // improve this later.
 type ImageInformation struct {
 	gorm.Model
-	ID           uint
 	Image        string
-	ImageVersion string
-	Type         databaseconstants.ImageType `gorm:"type:varchar(50);not null"`
-	CreatedAt    time.Time
+	ImageVersion string                      `gorm:"index:idx_type_version"`
+	ImageType    databaseconstants.ImageType `gorm:"type:varchar(50);not null;index:idx_type_version"`
 }
