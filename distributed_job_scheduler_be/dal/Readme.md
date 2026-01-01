@@ -66,6 +66,8 @@ go run ./cmd/server
 * Add your datamodels inside the `sql_dal/models/` folder
 * Once you have added the data models then make changes in the `sql_dal/config/migrations.go` file to ensure the data models are migrated
 * Create separate repositories for each data model that was added inside the `sql_dal/repository` folder, here the main folder will contain the interface of the repo and the `postgres` folder should have the concrete implementation of the queries that we are trying to do to the database. NOTE: The database needs to be accessible only inside this layer, the service or the handler should not access the database directly.
-* Create separate service to have the buisiness logic (if any).
-* Create separate handles and routes for accessing the queries that was exposed as part of the handler/service/repo.
+* Create separate service inside `internal/service` to have the buisiness logic (if any)
+* Create separate handlers (inside `internal/api/handlers`) and routes (inside `internal/api/routes`) for accessing the queries that was exposed as part of the service and repo.
 * Ensure the created repo, service, handler are instantiated properly under the `internal/container/container.go` file (Required for dependency injection).
+* Ensure the data flow is like `handler -> service -> repository -> model`
+* Each handler should have its separate `<name>_routes.go` file, and register the routes inside the main `routes.go` file.
