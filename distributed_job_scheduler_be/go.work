@@ -2,6 +2,7 @@ go 1.25.5
 
 use (
 	./constants
+	./core/httpclient
 	./core/job_execution
 	./core/leaders
 	./core/pod_library
