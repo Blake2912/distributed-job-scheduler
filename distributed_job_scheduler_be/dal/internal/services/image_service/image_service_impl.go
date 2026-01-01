@@ -8,19 +8,19 @@ import (
 	"example.com/dal/sql_dal/repository"
 )
 
-type service struct {
+type imageService struct {
 	imageRepo repository.ImageRepository
 }
 
 func NewImageService(
 	imageRepo repository.ImageRepository,
-) Service {
-	return &service{
+) ImageService {
+	return &imageService{
 		imageRepo: imageRepo,
 	}
 }
 
-func (s *service) GetByTypeAndVersion(
+func (s *imageService) GetByTypeAndVersion(
 	ctx context.Context,
 	imageType databaseconstants.ImageType,
 	version string,

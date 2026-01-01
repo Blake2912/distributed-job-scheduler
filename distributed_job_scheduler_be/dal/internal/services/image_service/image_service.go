@@ -7,7 +7,7 @@ import (
 	"example.com/dal/sql_dal/models"
 )
 
-type Service interface {
+type ImageService interface {
 	GetByTypeAndVersion(
 		ctx context.Context,
 		imageType databaseconstants.ImageType,
