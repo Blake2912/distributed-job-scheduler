@@ -10,6 +10,8 @@ import (
 	"syscall"
 	"time"
 
+	"example.com/dal/internal/api/routes"
+	"example.com/dal/internal/container"
 	"example.com/dal/redis_dal/redisclient"
 	"example.com/dal/sql_dal/config"
 	"github.com/gin-gonic/gin"
@@ -29,12 +31,6 @@ func main() {
 	}
 	defer config.CloseSqlConnection()
 
-	// Run migrations -
-	// Improvements, possibility of race conditions as multiple pods can be spwanned ensure its run only once
-	if err := config.Migrate(dbCtx, config.DB); err != nil {
-		log.Fatal(err)
-	}
-
 	//connect redis
 	redisCtx, rediscancel := context.WithTimeout(ctx, 20*time.Second)
 	defer rediscancel()
@@ -46,10 +42,15 @@ func main() {
 	defer rdb.Close()
 	log.Println("Connected to redis")
 
+	// Application startup
+	container := container.BuildContainer(config.DB)
+
 	//router
 	router := gin.Default()
 	router.GET("hello/", hello)
 	router.GET("helloRedis/", redisTest(rdb))
+
+	routes.RegisterRoutes(router, container)
 
 	srv := &http.Server{
 		Addr:    ":8081",

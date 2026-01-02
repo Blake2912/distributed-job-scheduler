@@ -1,17 +1,19 @@
-package config
+package migration
 
 import (
 	"context"
 	"fmt"
 	"log"
 
-	datamodels "example.com/dal/sql_dal/data_models"
+	"example.com/dal/sql_dal/models"
 	"gorm.io/gorm"
 )
 
 // Put in all of the data models here for migrating the same, maintain ordering
 var allModels = []any{
-	&datamodels.Jobs{},
+	&models.Jobs{},
+	&models.ImageInformation{},
+	&models.JobExecution{},
 }
 
 func Migrate(ctx context.Context, database *gorm.DB) error {
