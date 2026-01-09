@@ -12,6 +12,8 @@ import (
 
 	"github.com/Blake2912/distributed-job-scheduler/scheduler-service/internal/api/routes"
 	"github.com/Blake2912/distributed-job-scheduler/scheduler-service/internal/container"
+	leader "github.com/Blake2912/distributed-job-scheduler/scheduler-service/internal/services/leader_election"
+	"github.com/Blake2912/distributed-job-scheduler/scheduler-service/internal/services/scheduler"
 	"github.com/Blake2912/distributed-job-scheduler/scheduler-service/redis_dal/redisclient"
 	"github.com/Blake2912/distributed-job-scheduler/scheduler-service/sql_dal/config"
 	"github.com/gin-gonic/gin"
@@ -44,6 +46,24 @@ func main() {
 
 	// Application startup
 	container := container.BuildContainer(config.DB)
+
+	leaderElector := leader.New(
+		rdb,
+		"scheduler:leader",
+		10*time.Second,
+	)
+
+	sched := scheduler.New()
+
+	log.Println("Scheduler service started")
+
+	err = leaderElector.Run(ctx, func(leaderCtx context.Context) {
+		sched.Run(leaderCtx)
+	})
+
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	//router
 	router := gin.Default()
