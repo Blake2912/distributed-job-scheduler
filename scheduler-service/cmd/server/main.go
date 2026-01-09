@@ -49,8 +49,8 @@ func main() {
 
 	leaderElector := leader.New(
 		rdb,
-		"scheduler:leader",
-		10*time.Second,
+		"scheduler:leader", //redis key
+		10*time.Second,     //placeholder TTL
 	)
 
 	sched := scheduler.New()

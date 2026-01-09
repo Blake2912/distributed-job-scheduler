@@ -28,7 +28,7 @@ func New(rdb *redis.Client, key string, ttl time.Duration) LeaderElection {
 
 func (leadership *LeaderElector) Run(
 	ctx context.Context,
-	onLeader func(context.Context),
+	onStartLeadership func(context.Context),
 ) error {
 	ticker := time.NewTicker(leadership.renewEvery)
 	defer ticker.Stop()
@@ -64,7 +64,7 @@ func (leadership *LeaderElector) Run(
 
 					//goroutine for scheduler logic
 					//this is non blocking so that the leader election loop keeps running
-					go onLeader(leaderCtx)
+					go onStartLeadership(leaderCtx)
 				}
 				continue
 			}
