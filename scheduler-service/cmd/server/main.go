@@ -43,7 +43,7 @@ func main() {
 	log.Println("Connected to redis")
 
 	// Application startup
-	container := container.BuildContainer(config.DB)
+	container := container.BuildContainer(config.DB, rdb, ctx)
 
 	//router
 	router := gin.Default()
