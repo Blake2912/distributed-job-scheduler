@@ -1,0 +1,100 @@
+basePath: /api
+host: localhost:8081
+info:
+  contact: {}
+  description: API for scheduler, image and worker spawning
+  title: Job Scheduler API
+  version: "1.0"
+paths:
+  /GetByTypeAndVersion:
+    get:
+      description: Writes and reads a test key from Redis
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Get's image information
+      tags:
+      - system
+  /hello:
+    get:
+      description: Simple hello endpoint
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+      summary: Health check
+      tags:
+      - system
+  /helloRedis:
+    get:
+      description: Writes and reads a test key from Redis
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Test Redis connection - TEMP
+      tags:
+      - system
+  /worker/spawnWorker:
+    get:
+      consumes:
+      - application/json
+      description: Spawns the given number of worker pods in the cluster
+      parameters:
+      - description: Number of workers to spawn
+        in: query
+        minimum: 1
+        name: noOfWorkers
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Pods spawned successfully
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Invalid input
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Spawn worker pods
+      tags:
+      - worker
+swagger: "2.0"
