@@ -21,6 +21,8 @@ import (
 type Container struct {
 	ImageHandler        *imagehandler.Handler
 	SpawnWorkersHandler *spawnworkersHandler.SpawnWorkersHandler
+	LeaderElector       leader.LeaderElection
+	Scheduler           *scheduler.Scheduler
 }
 
 func BuildContainer(db *gorm.DB, rdb *redis.Client, ctx context.Context) *Container {
@@ -44,14 +46,6 @@ func BuildContainer(db *gorm.DB, rdb *redis.Client, ctx context.Context) *Contai
 
 	sched := scheduler.New()
 
-	err = leaderElector.Run(ctx, func(leaderCtx context.Context) {
-		sched.Run(leaderCtx)
-	})
-
-	if err != nil {
-		log.Fatal(err)
-	}
-
 	// Build Handlers and return them
 	imageHandler := imagehandler.New(imageService)
 	spawnWorkersHandler := spawnworkersHandler.NewSpawnWokersHandler(spawnWorkerService)
@@ -59,5 +53,7 @@ func BuildContainer(db *gorm.DB, rdb *redis.Client, ctx context.Context) *Contai
 	return &Container{
 		ImageHandler:        imageHandler,
 		SpawnWorkersHandler: spawnWorkersHandler,
+		LeaderElector:       leaderElector,
+		Scheduler:           sched,
 	}
 }
