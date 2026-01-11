@@ -10,8 +10,10 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/Blake2912/distributed-job-scheduler/scheduler-service/httpclient"
 	"github.com/Blake2912/distributed-job-scheduler/scheduler-service/internal/api/routes"
 	"github.com/Blake2912/distributed-job-scheduler/scheduler-service/internal/container"
+	"github.com/Blake2912/distributed-job-scheduler/scheduler-service/pod_library/client"
 	"github.com/Blake2912/distributed-job-scheduler/scheduler-service/redis_dal/redisclient"
 	"github.com/Blake2912/distributed-job-scheduler/scheduler-service/sql_dal/config"
 	"github.com/gin-gonic/gin"
@@ -42,8 +44,15 @@ func main() {
 	defer rdb.Close()
 	log.Println("Connected to redis")
 
+	httpClient := httpclient.New(120 * time.Minute)
+
+	k8sClient, err := client.New()
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	// Application startup
-	container := container.BuildContainer(config.DB, rdb, ctx)
+	container := container.BuildContainer(config.DB, rdb, ctx, httpClient, k8sClient)
 
 	//router
 	router := gin.Default()
