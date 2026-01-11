@@ -2,7 +2,6 @@ package container
 
 import (
 	"context"
-	"log"
 	"time"
 
 	"github.com/Blake2912/distributed-job-scheduler/scheduler-service/httpclient"
@@ -23,6 +22,8 @@ import (
 type Container struct {
 	ImageHandler        *imagehandler.Handler
 	SpawnWorkersHandler *spawnworkersHandler.SpawnWorkersHandler
+	LeaderElector       leader.LeaderElection
+	Scheduler           *scheduler.Scheduler
 }
 
 func BuildContainer(db *gorm.DB, rdb *redis.Client, ctx context.Context, httpClient *httpclient.Client, k8sClient *client.K8sClient) *Container {
@@ -47,14 +48,6 @@ func BuildContainer(db *gorm.DB, rdb *redis.Client, ctx context.Context, httpCli
 
 	sched := scheduler.New(jobSchedulerService)
 
-	err := leaderElector.Run(ctx, func(leaderCtx context.Context) {
-		sched.Run(leaderCtx)
-	})
-
-	if err != nil {
-		log.Fatal(err)
-	}
-
 	// Build Handlers and return them
 	imageHandler := imagehandler.New(imageService)
 	spawnWorkersHandler := spawnworkersHandler.NewSpawnWokersHandler(spawnWorkerService)
@@ -62,5 +55,7 @@ func BuildContainer(db *gorm.DB, rdb *redis.Client, ctx context.Context, httpCli
 	return &Container{
 		ImageHandler:        imageHandler,
 		SpawnWorkersHandler: spawnWorkersHandler,
+		LeaderElector:       leaderElector,
+		Scheduler:           sched,
 	}
 }
