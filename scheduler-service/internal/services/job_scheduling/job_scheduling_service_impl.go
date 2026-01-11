@@ -42,6 +42,11 @@ func (j *jobSchedulingService) ScheduleJobs(ctx context.Context) error {
 		return error
 	}
 
+	if len(validJobs) == 0 {
+		log.Println("No jobs found to schedule returning.")
+		return nil
+	}
+
 	// Pick existing executions
 	validJobIds := make([]uint, 0, len(validJobs))
 	validJobsMap := make(map[uint]models.Jobs)
