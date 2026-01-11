@@ -22,7 +22,7 @@ func New(jobSchedulingService jobscheduling.JobSchedulingService) *Scheduler {
 func (s *Scheduler) Run(ctx context.Context) {
 	log.Println("Scheduler started (leader)")
 
-	ticker := time.NewTicker(30 * time.Minute) // Poll once in every 30 min
+	ticker := time.NewTicker(2 * time.Second)
 	defer ticker.Stop()
 
 	for {
@@ -33,6 +33,7 @@ func (s *Scheduler) Run(ctx context.Context) {
 		case <-ticker.C:
 			log.Println("Polling DB for eligible jobs...")
 			s.jobSchedulingService.ScheduleJobs(ctx)
+			time.Sleep(time.Minute * 30)
 		}
 	}
 }
