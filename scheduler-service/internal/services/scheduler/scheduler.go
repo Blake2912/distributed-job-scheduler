@@ -33,7 +33,6 @@ func (s *Scheduler) Run(ctx context.Context) {
 		case <-ticker.C:
 			log.Println("Polling DB for eligible jobs...")
 			s.jobSchedulingService.ScheduleJobs(ctx)
-			time.Sleep(time.Minute * 30)
 		}
 	}
 }
