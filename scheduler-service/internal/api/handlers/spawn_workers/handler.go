@@ -16,6 +16,17 @@ func NewSpawnWokersHandler(svc spawnworkers.SpawnWorkersService) *SpawnWorkersHa
 	return &SpawnWorkersHandler{svc: svc}
 }
 
+// SpawnWorkers godoc
+// @Summary      Spawn worker pods
+// @Description  Spawns the given number of worker pods in the cluster
+// @Tags         worker
+// @Accept       json
+// @Produce      json
+// @Param        noOfWorkers query int true "Number of workers to spawn" minimum(1)
+// @Success      200 {object} map[string]string "Pods spawned successfully"
+// @Failure      400 {object} map[string]string "Invalid input"
+// @Failure      500 {object} map[string]string "Internal server error"
+// @Router       /worker/spawnWorker [get]
 func (h *SpawnWorkersHandler) SpawnWorkers(c *gin.Context) {
 	noOfWorkers := c.Query("noOfWorkers")
 

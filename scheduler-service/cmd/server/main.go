@@ -10,14 +10,22 @@ import (
 	"syscall"
 	"time"
 
+	_ "github.com/Blake2912/distributed-job-scheduler/scheduler-service/docs"
 	"github.com/Blake2912/distributed-job-scheduler/scheduler-service/internal/api/routes"
 	"github.com/Blake2912/distributed-job-scheduler/scheduler-service/internal/container"
 	"github.com/Blake2912/distributed-job-scheduler/scheduler-service/redis_dal/redisclient"
 	"github.com/Blake2912/distributed-job-scheduler/scheduler-service/sql_dal/config"
 	"github.com/gin-gonic/gin"
 	"github.com/redis/go-redis/v9"
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
 )
 
+// @title           Job Scheduler API
+// @version         1.0
+// @description     API for scheduler, image and worker spawning
+// @host            localhost:8081
+// @BasePath        /api
 func main() {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
@@ -47,8 +55,11 @@ func main() {
 
 	//router
 	router := gin.Default()
-	router.GET("hello/", hello)
-	router.GET("helloRedis/", redisTest(rdb))
+
+	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+
+	router.GET("/api/hello", hello)
+	router.GET("/api/helloRedis", redisTest(rdb))
 
 	routes.RegisterRoutes(router, container)
 
@@ -85,12 +96,26 @@ func main() {
 	log.Println("Server exited cleanly")
 }
 
+// Hello godoc
+// @Summary Health check
+// @Description Simple hello endpoint
+// @Tags system
+// @Produce json
+// @Success 200 {string} string
+// @Router /hello [get]
 func hello(c *gin.Context) {
 	msg := fmt.Sprintln("Hello")
 	c.IndentedJSON(http.StatusOK, msg)
 }
 
-// temp test
+// RedisTest godoc
+// @Summary Test Redis connection - TEMP
+// @Description Writes and reads a test key from Redis
+// @Tags system
+// @Produce json
+// @Success 200 {object} map[string]string
+// @Failure 500 {object} map[string]string
+// @Router /helloRedis [get]
 func redisTest(rdb *redis.Client) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		ctx := c.Request.Context()
