@@ -38,12 +38,12 @@ func (je *JobExecutionRepository) GetLatestJobExecutions(ctx context.Context, jo
 
 func (je *JobExecutionRepository) InsertNewJobExecutions(ctx context.Context, jobIdToStatusMap map[uint]database_constants.JobExecutionStatus) error {
 
-	jobExecutionsToInsert := make([]models.JobExecution, len(jobIdToStatusMap))
+	jobExecutionsToInsert := make([]models.JobExecution, 0, len(jobIdToStatusMap))
 
 	for jobId, status := range jobIdToStatusMap {
 		jobExecutionsToInsert = append(jobExecutionsToInsert, createJobExecution(jobId, status))
 	}
-	
+
 	return je.db.Create(&jobExecutionsToInsert).Error
 }
 

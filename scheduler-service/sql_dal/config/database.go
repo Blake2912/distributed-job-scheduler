@@ -6,11 +6,9 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"time"
 
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
-	"gorm.io/gorm/logger"
 )
 
 var DB *gorm.DB
@@ -28,19 +26,9 @@ func ConnectDB(ctx context.Context) error {
 		os.Getenv("DB_PORT"),
 		os.Getenv("DB_SSLMODE"),
 	)
-	newLogger := logger.New(
-		log.New(os.Stdout, "[GORM] ", log.LstdFlags),
-		logger.Config{
-			SlowThreshold:             300 * time.Millisecond,
-			LogLevel:                  logger.Warn,
-			IgnoreRecordNotFoundError: true,
-			Colorful:                  false,
-		},
-	)
 
 	database, err := gorm.Open(postgres.Open(dsn), &gorm.Config{
 		CreateBatchSize: 250,
-		Logger:          newLogger,
 	})
 
 	if err != nil {

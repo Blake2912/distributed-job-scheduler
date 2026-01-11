@@ -1,4 +1,27 @@
 basePath: /api
+definitions:
+  jobs.CreateJobsPayload:
+    properties:
+      config:
+        type: string
+      is_recurring_job:
+        type: boolean
+      name:
+        type: string
+      should_retry_after_backoff:
+        type: boolean
+      trigger_time:
+        type: string
+      type:
+        type: string
+    required:
+    - config
+    - is_recurring_job
+    - name
+    - should_retry_after_backoff
+    - trigger_time
+    - type
+    type: object
 host: localhost:8081
 info:
   contact: {}
@@ -61,6 +84,44 @@ paths:
       summary: Test Redis connection - TEMP
       tags:
       - system
+  /jobs/create:
+    post:
+      consumes:
+      - application/json
+      description: Creates multiple jobs in a single request (bulk create)
+      parameters:
+      - description: List of jobs to create
+        in: body
+        name: jobs
+        required: true
+        schema:
+          items:
+            $ref: '#/definitions/jobs.CreateJobsPayload'
+          type: array
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Jobs created successfully
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Invalid request payload
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Create multiple jobs
+      tags:
+      - jobs
   /worker/spawnWorker:
     get:
       consumes:

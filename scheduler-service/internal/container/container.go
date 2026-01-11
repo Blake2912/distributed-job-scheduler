@@ -6,9 +6,11 @@ import (
 
 	"github.com/Blake2912/distributed-job-scheduler/scheduler-service/httpclient"
 	imagehandler "github.com/Blake2912/distributed-job-scheduler/scheduler-service/internal/api/handlers/image_handler"
+	jobshandler "github.com/Blake2912/distributed-job-scheduler/scheduler-service/internal/api/handlers/jobs_handler"
 	spawnworkersHandler "github.com/Blake2912/distributed-job-scheduler/scheduler-service/internal/api/handlers/spawn_workers"
 	imageservice "github.com/Blake2912/distributed-job-scheduler/scheduler-service/internal/services/image_service"
 	jobscheduling "github.com/Blake2912/distributed-job-scheduler/scheduler-service/internal/services/job_scheduling"
+	jobsservice "github.com/Blake2912/distributed-job-scheduler/scheduler-service/internal/services/jobs_service"
 	leader "github.com/Blake2912/distributed-job-scheduler/scheduler-service/internal/services/leader_election"
 	"github.com/Blake2912/distributed-job-scheduler/scheduler-service/internal/services/scheduler"
 	spawnworkers "github.com/Blake2912/distributed-job-scheduler/scheduler-service/internal/services/spawn_workers"
@@ -24,6 +26,7 @@ type Container struct {
 	SpawnWorkersHandler *spawnworkersHandler.SpawnWorkersHandler
 	LeaderElector       leader.LeaderElection
 	Scheduler           *scheduler.Scheduler
+	JobsHandler         *jobshandler.JobsHandler
 }
 
 func BuildContainer(db *gorm.DB, rdb *redis.Client, ctx context.Context, httpClient *httpclient.Client, k8sClient *client.K8sClient) *Container {
@@ -39,6 +42,7 @@ func BuildContainer(db *gorm.DB, rdb *redis.Client, ctx context.Context, httpCli
 	imageService := imageservice.NewImageService(imageRepo)
 	spawnWorkerService := spawnworkers.NewSpawnWorkerService(httpClient, k8sClient)
 	jobSchedulerService := jobscheduling.NewJobSchedulingService(redisQueueCommands, jobRepository, jobExecutionRepository)
+	jobsService := jobsservice.NewJobsService(jobRepository)
 
 	leaderElector := leader.New(
 		rdb,
@@ -51,11 +55,13 @@ func BuildContainer(db *gorm.DB, rdb *redis.Client, ctx context.Context, httpCli
 	// Build Handlers and return them
 	imageHandler := imagehandler.New(imageService)
 	spawnWorkersHandler := spawnworkersHandler.NewSpawnWokersHandler(spawnWorkerService)
+	jobsHandler := jobshandler.New(jobsService)
 
 	return &Container{
 		ImageHandler:        imageHandler,
 		SpawnWorkersHandler: spawnWorkersHandler,
 		LeaderElector:       leaderElector,
 		Scheduler:           sched,
+		JobsHandler:         jobsHandler,
 	}
 }

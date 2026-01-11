@@ -99,6 +99,64 @@ const docTemplate = `{
                 }
             }
         },
+        "/jobs/create": {
+            "post": {
+                "description": "Creates multiple jobs in a single request (bulk create)",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "jobs"
+                ],
+                "summary": "Create multiple jobs",
+                "parameters": [
+                    {
+                        "description": "List of jobs to create",
+                        "name": "jobs",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/jobs.CreateJobsPayload"
+                            }
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Jobs created successfully",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request payload",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/worker/spawnWorker": {
             "get": {
                 "description": "Spawns the given number of worker pods in the cluster",
@@ -150,6 +208,39 @@ const docTemplate = `{
                             }
                         }
                     }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "jobs.CreateJobsPayload": {
+            "type": "object",
+            "required": [
+                "config",
+                "is_recurring_job",
+                "name",
+                "should_retry_after_backoff",
+                "trigger_time",
+                "type"
+            ],
+            "properties": {
+                "config": {
+                    "type": "string"
+                },
+                "is_recurring_job": {
+                    "type": "boolean"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "should_retry_after_backoff": {
+                    "type": "boolean"
+                },
+                "trigger_time": {
+                    "type": "string"
+                },
+                "type": {
+                    "type": "string"
                 }
             }
         }

@@ -24,3 +24,7 @@ func (j *JobRepository) GetJobsToSchedule(ctx context.Context, currentTime time.
 		Where("next_run_at <= ? AND enabled = ?", currentTime, true).
 		Find(ctx)
 }
+
+func (j *JobRepository) CreateJobs(ctx context.Context, jobs []models.Jobs) error {
+	return j.db.Create(&jobs).Error
+}

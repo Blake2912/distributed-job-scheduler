@@ -35,8 +35,17 @@ func NewJobSchedulingService(
 
 func (j *jobSchedulingService) ScheduleJobs(ctx context.Context) error {
 
+	t := time.Now().In(time.UTC)
+
+	timeOnly := time.Date(0, 1, 1,
+		t.Hour(),
+		t.Minute(),
+		t.Second(),
+		t.Nanosecond(),
+		time.UTC,
+	)
 	// Pick jobs to process
-	validJobs, error := j.jobRepository.GetJobsToSchedule(ctx, time.Now().In(time.UTC))
+	validJobs, error := j.jobRepository.GetJobsToSchedule(ctx, timeOnly)
 	if error != nil {
 		log.Printf("An error occurred while quering jobs data %s \n", error.Error())
 		return error
@@ -46,7 +55,6 @@ func (j *jobSchedulingService) ScheduleJobs(ctx context.Context) error {
 		log.Println("No jobs found to schedule returning.")
 		return nil
 	}
-
 	// Pick existing executions
 	validJobIds := make([]uint, 0, len(validJobs))
 	validJobsMap := make(map[uint]models.Jobs)
@@ -65,7 +73,7 @@ func (j *jobSchedulingService) ScheduleJobs(ctx context.Context) error {
 	latestExecutionsMap := make(map[uint]models.JobExecution)
 
 	for _, exec := range latestExecutions {
-		latestExecutions[exec.JobID] = exec
+		latestExecutionsMap[exec.JobID] = exec
 	}
 
 	newJobsToExecute := make(map[uint]database_constants.JobExecutionStatus, len(validJobIds))
@@ -87,15 +95,13 @@ func (j *jobSchedulingService) ScheduleJobs(ctx context.Context) error {
 		}
 
 		if execFound {
-			createdAt := jobExecution.CreatedAt.In(time.UTC)
+			createdAt := jobExecution.CreatedAt
 
 			// Job already executed for the day so skip it
 			if today.Year() == createdAt.Year() && today.YearDay() == createdAt.YearDay() {
-
 				if jobExecution.Status == database_constants.Error {
 					newJobsIdsToPushToQueue = append(newJobsIdsToPushToQueue, job)
 				}
-
 				continue
 			}
 
@@ -111,7 +117,7 @@ func (j *jobSchedulingService) ScheduleJobs(ctx context.Context) error {
 	}
 
 	// Push the jobs to queue
-	log.Printf("Starting to push the jobs into redis queue")
+	log.Printf("Starting to push the jobs into redis queue  %+v", newJobsIdsToPushToQueue)
 	pushedJobs := make([]uint, len(validJobIds))
 	for _, job := range newJobsIdsToPushToQueue {
 		jobInStr := strconv.FormatUint(uint64(job), 10)
