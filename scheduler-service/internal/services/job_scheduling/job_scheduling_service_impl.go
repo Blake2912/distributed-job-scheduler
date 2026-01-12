@@ -118,7 +118,6 @@ func (j *jobSchedulingService) ScheduleJobs(ctx context.Context) error {
 
 	// Push the jobs to queue
 	log.Printf("Starting to push the jobs into redis queue  %+v", newJobsIdsToPushToQueue)
-	pushedJobs := make([]uint, len(validJobIds))
 	for _, job := range newJobsIdsToPushToQueue {
 		jobInStr := strconv.FormatUint(uint64(job), 10)
 		queueErr := j.redisQueueCommands.LEnqueue(ctx, infra_constants.JobsQueue, jobInStr)
@@ -127,7 +126,6 @@ func (j *jobSchedulingService) ScheduleJobs(ctx context.Context) error {
 			// Removing from insert so that db and redis are consistent
 			delete(newJobsToExecute, job)
 		}
-		pushedJobs = append(pushedJobs, job)
 	}
 	log.Printf("Completed pushing jobs to queue now inserting executions into database")
 
