@@ -99,7 +99,7 @@ func (j *jobSchedulingService) ScheduleJobs(ctx context.Context) error {
 
 			// Job already executed for the day so skip it
 			if today.Year() == createdAt.Year() && today.YearDay() == createdAt.YearDay() {
-				if jobExecution.Status == database_constants.Error {
+				if jobExecution.Status == database_constants.Error && jobExecution.RetryCount > 0 {
 					newJobsIdsToPushToQueue = append(newJobsIdsToPushToQueue, job)
 				}
 				continue
