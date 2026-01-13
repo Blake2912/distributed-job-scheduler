@@ -8,13 +8,13 @@ import (
 )
 
 type spawnWorkersService struct {
-	httpClient httpclient.Client
-	k8sClient  podLibraryClient.K8sClient
+	httpClient *httpclient.Client
+	k8sClient  *podLibraryClient.K8sClient
 }
 
 func NewSpawnWorkerService(
-	httpClient httpclient.Client,
-	k8sClient podLibraryClient.K8sClient,
+	httpClient *httpclient.Client,
+	k8sClient *podLibraryClient.K8sClient,
 ) SpawnWorkersService {
 	return &spawnWorkersService{
 		httpClient: httpClient,

@@ -26,7 +26,10 @@ func ConnectDB(ctx context.Context) error {
 		os.Getenv("DB_PORT"),
 		os.Getenv("DB_SSLMODE"),
 	)
-	database, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
+
+	database, err := gorm.Open(postgres.Open(dsn), &gorm.Config{
+		CreateBatchSize: 250,
+	})
 
 	if err != nil {
 		return fmt.Errorf("Failed to connect to database: %w", err)

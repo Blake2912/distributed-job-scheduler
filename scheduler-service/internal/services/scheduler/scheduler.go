@@ -4,19 +4,25 @@ import (
 	"context"
 	"log"
 	"time"
+
+	jobscheduling "github.com/Blake2912/distributed-job-scheduler/scheduler-service/internal/services/job_scheduling"
 )
 
 // Placeholder scheduler logic for now
-type Scheduler struct{}
+type Scheduler struct {
+	jobSchedulingService jobscheduling.JobSchedulingService
+}
 
-func New() *Scheduler {
-	return &Scheduler{}
+func New(jobSchedulingService jobscheduling.JobSchedulingService) *Scheduler {
+	return &Scheduler{
+		jobSchedulingService: jobSchedulingService,
+	}
 }
 
 func (s *Scheduler) Run(ctx context.Context) {
 	log.Println("Scheduler started (leader)")
 
-	ticker := time.NewTicker(5 * time.Second)
+	ticker := time.NewTicker(30 * time.Second)
 	defer ticker.Stop()
 
 	for {
@@ -26,6 +32,7 @@ func (s *Scheduler) Run(ctx context.Context) {
 			return
 		case <-ticker.C:
 			log.Println("Polling DB for eligible jobs...")
+			s.jobSchedulingService.ScheduleJobs(ctx)
 		}
 	}
 }

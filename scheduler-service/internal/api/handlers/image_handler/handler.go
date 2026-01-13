@@ -17,6 +17,14 @@ func New(svc imageservice.ImageService) *Handler {
 	return &Handler{svc: svc}
 }
 
+// RedisTest godoc
+// @Summary Get's image information
+// @Description Writes and reads a test key from Redis
+// @Tags system
+// @Produce json
+// @Success 200 {object} map[string]string
+// @Failure 500 {object} map[string]string
+// @Router /GetByTypeAndVersion [get]
 func (h *Handler) GetByTypeAndVersion(c *gin.Context) {
 	imageType := c.Query("type")
 	version := c.Query("version")
