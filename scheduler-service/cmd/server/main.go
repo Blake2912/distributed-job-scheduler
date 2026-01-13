@@ -10,9 +10,11 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/Blake2912/distributed-job-scheduler/scheduler-service/eventbus"
 	"github.com/Blake2912/distributed-job-scheduler/scheduler-service/internal/api/routes"
 	"github.com/Blake2912/distributed-job-scheduler/scheduler-service/internal/container"
 	"github.com/Blake2912/distributed-job-scheduler/scheduler-service/redis_dal/redisclient"
+	"github.com/Blake2912/distributed-job-scheduler/scheduler-service/redis_dal/redissubscriber"
 	"github.com/Blake2912/distributed-job-scheduler/scheduler-service/sql_dal/config"
 	"github.com/gin-gonic/gin"
 	"github.com/redis/go-redis/v9"
@@ -44,6 +46,11 @@ func main() {
 
 	// Application startup
 	container := container.BuildContainer(config.DB, rdb, ctx)
+
+	// Event bus
+	bus := eventbus.NewEventBus[eventbus.TTLExpiredEvent](500)
+
+	redissubscriber.PublishRedisKeyExpiryEvent(rdb, ctx, bus)
 
 	//router
 	router := gin.Default()
