@@ -2,7 +2,6 @@ package redissubscriber
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"time"
 
@@ -32,7 +31,7 @@ func PublishRedisKeyExpiryEvent(rdb *redis.Client, ctx context.Context, bus *eve
 					time.Sleep(time.Second) // avoid tight loop on failure
 					continue
 				}
-				fmt.Printf("Key expired: %s\n", msg.Payload)
+				log.Printf("Key expired: %s\n", msg.Payload)
 
 				// Handle expiry event
 				bus.Publish(eventbus.TTLExpiredEvent{
