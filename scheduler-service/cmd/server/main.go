@@ -62,12 +62,15 @@ func main() {
 	}
 
 	// Application startup
+	// Future Improvmement: Move the parameters into a struct to make it readable if the parameters grows.
 	container := container.BuildContainer(config.DB, rdb, ctx, httpClient, k8sClient)
 
 	// Event bus
 	bus := eventbus.NewEventBus[eventbus.TTLExpiredEvent](500)
 
 	redissubscriber.PublishRedisKeyExpiryEvent(rdb, ctx, bus)
+	// Future improvment: Use DI
+	container.WorkerHealthCheck.StartTTLExpiryExecution(ctx, bus)
 
 	//router
 	router := gin.Default()

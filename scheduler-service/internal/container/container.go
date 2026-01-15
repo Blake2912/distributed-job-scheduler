@@ -8,6 +8,7 @@ import (
 	imagehandler "github.com/Blake2912/distributed-job-scheduler/scheduler-service/internal/api/handlers/image_handler"
 	jobshandler "github.com/Blake2912/distributed-job-scheduler/scheduler-service/internal/api/handlers/jobs_handler"
 	spawnworkersHandler "github.com/Blake2912/distributed-job-scheduler/scheduler-service/internal/api/handlers/spawn_workers"
+	ttlexpiryconsumers "github.com/Blake2912/distributed-job-scheduler/scheduler-service/internal/consumers/ttl_expiry_consumers"
 	imageservice "github.com/Blake2912/distributed-job-scheduler/scheduler-service/internal/services/image_service"
 	jobscheduling "github.com/Blake2912/distributed-job-scheduler/scheduler-service/internal/services/job_scheduling"
 	jobsservice "github.com/Blake2912/distributed-job-scheduler/scheduler-service/internal/services/jobs_service"
@@ -27,6 +28,7 @@ type Container struct {
 	LeaderElector       leader.LeaderElection
 	Scheduler           *scheduler.Scheduler
 	JobsHandler         *jobshandler.JobsHandler
+	WorkerHealthCheck   ttlexpiryconsumers.TTLExpiryConsumer
 }
 
 func BuildContainer(db *gorm.DB, rdb *redis.Client, ctx context.Context, httpClient *httpclient.Client, k8sClient *client.K8sClient) *Container {
@@ -43,6 +45,7 @@ func BuildContainer(db *gorm.DB, rdb *redis.Client, ctx context.Context, httpCli
 	spawnWorkerService := spawnworkers.NewSpawnWorkerService(httpClient, k8sClient)
 	jobSchedulerService := jobscheduling.NewJobSchedulingService(redisQueueCommands, jobRepository, jobExecutionRepository)
 	jobsService := jobsservice.NewJobsService(jobRepository)
+	workerHealthCheckService := ttlexpiryconsumers.NewTTLExpiryConsumer()
 
 	leaderElector := leader.New(
 		rdb,
@@ -63,5 +66,6 @@ func BuildContainer(db *gorm.DB, rdb *redis.Client, ctx context.Context, httpCli
 		LeaderElector:       leaderElector,
 		Scheduler:           sched,
 		JobsHandler:         jobsHandler,
+		WorkerHealthCheck:   workerHealthCheckService,
 	}
 }

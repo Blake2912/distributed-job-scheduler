@@ -6,6 +6,7 @@ import (
 	"time"
 
 	jobscheduling "github.com/Blake2912/distributed-job-scheduler/scheduler-service/internal/services/job_scheduling"
+	"github.com/Blake2912/distributed-job-scheduler/scheduler-service/internal/state"
 )
 
 // Placeholder scheduler logic for now
@@ -21,6 +22,7 @@ func New(jobSchedulingService jobscheduling.JobSchedulingService) *Scheduler {
 
 func (s *Scheduler) Run(ctx context.Context) {
 	log.Println("Scheduler started (leader)")
+	state.SetLeader(true)
 
 	ticker := time.NewTicker(30 * time.Second)
 	defer ticker.Stop()
@@ -28,6 +30,7 @@ func (s *Scheduler) Run(ctx context.Context) {
 	for {
 		select {
 		case <-ctx.Done():
+			state.SetLeader(false)
 			log.Println("Scheduler stopped (lost leadership)")
 			return
 		case <-ticker.C:
