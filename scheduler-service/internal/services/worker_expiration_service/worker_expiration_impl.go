@@ -32,9 +32,10 @@ func (w *workerExpiration) HandleWorkerExpiry(ctx context.Context, expiredKey st
 
 	if !strings.Contains(expiredKey, database_constants.HEALTH_CHECK_KEY_IDENTIFIER) {
 		log.Printf("Ingoring %s key as no operation required here", expiredKey)
+		return
 	}
 
-	splitString := strings.Split(expiredKey, "_")
+	splitString := strings.Split(expiredKey, "#")
 	workerId := splitString[1]
 	jobExecutionId := splitString[2]
 

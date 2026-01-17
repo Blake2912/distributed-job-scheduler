@@ -72,5 +72,5 @@ func (w *workerHealthChecks) DeleteWorkerKeys(ctx context.Context, workerId stri
 }
 
 func (w *workerHealthChecks) buildHealthCheckKey(workerId string, jobExecutionId string) string {
-	return fmt.Sprintf("%s_%s_%s", database_constants.HEALTH_CHECK_KEY_IDENTIFIER, workerId, jobExecutionId)
+	return fmt.Sprintf("%s#%s#%s", database_constants.HEALTH_CHECK_KEY_IDENTIFIER, workerId, jobExecutionId)
 }
