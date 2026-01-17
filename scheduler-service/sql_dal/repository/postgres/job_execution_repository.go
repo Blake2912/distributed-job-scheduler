@@ -2,6 +2,8 @@ package postgres
 
 import (
 	"context"
+	"fmt"
+	"strings"
 	"time"
 
 	"github.com/Blake2912/distributed-job-scheduler/common/database_constants"
@@ -45,6 +47,46 @@ func (je *JobExecutionRepository) InsertNewJobExecutions(ctx context.Context, jo
 	}
 
 	return je.db.Create(&jobExecutionsToInsert).Error
+}
+
+func (je *JobExecutionRepository) GetJobExecutionInfoWithExecutionId(ctx context.Context, jobExecutionId uint) (models.JobExecution, error) {
+	return gorm.G[models.JobExecution](je.db).
+		Where("id = ?", jobExecutionId).
+		First(ctx)
+}
+
+func (je *JobExecutionRepository) UpdateJobExecutionStatus(ctx context.Context, jobExecutionIdToStatusMap map[uint]database_constants.JobExecutionStatus) error {
+
+	var (
+		ids       []uint
+		caseParts []string
+		args      []any
+	)
+
+	for id, status := range jobExecutionIdToStatusMap {
+		ids = append(ids, id)
+		caseParts = append(caseParts, "WHEN ? THEN ?")
+		args = append(args, id, status)
+	}
+
+	caseSQL := strings.Join(caseParts, " ")
+
+	query := fmt.Sprintf(`
+		UPDATE job_executions
+		SET status = CASE id
+			%s
+		END
+		WHERE id IN ?;
+		`, caseSQL)
+
+	args = append(args, ids)
+
+	err := je.db.Exec(query, args...).Error
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func createJobExecution(jobId uint, status database_constants.JobExecutionStatus) models.JobExecution {

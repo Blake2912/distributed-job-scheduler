@@ -16,6 +16,7 @@ import (
 	leader "github.com/Blake2912/distributed-job-scheduler/scheduler-service/internal/services/leader_election"
 	"github.com/Blake2912/distributed-job-scheduler/scheduler-service/internal/services/scheduler"
 	spawnworkers "github.com/Blake2912/distributed-job-scheduler/scheduler-service/internal/services/spawn_workers"
+	workerexpirationservice "github.com/Blake2912/distributed-job-scheduler/scheduler-service/internal/services/worker_expiration_service"
 	workerhealthchecks "github.com/Blake2912/distributed-job-scheduler/scheduler-service/internal/services/worker_health_checks"
 	"github.com/Blake2912/distributed-job-scheduler/scheduler-service/pod_library/client"
 	"github.com/Blake2912/distributed-job-scheduler/scheduler-service/redis_dal/commands/queries"
@@ -54,9 +55,10 @@ func BuildContainer(db *gorm.DB, rdb *redis.Client, ctx context.Context, httpCli
 	jobSchedulerService := jobscheduling.NewJobSchedulingService(redisQueueCommands, jobRepository, jobExecutionRepository)
 	jobsService := jobsservice.NewJobsService(jobRepository)
 	workerHealthCheckService := workerhealthchecks.NewWorkerHealthCheck(redisQueries)
+	workerExpiryService := workerexpirationservice.NewWorkerExpiry(jobExecutionRepository)
 
 	// Consumers
-	ttlExpiryConsumer := ttlexpiryconsumers.NewTTLExpiryConsumer()
+	ttlExpiryConsumer := ttlexpiryconsumers.NewTTLExpiryConsumer(workerExpiryService)
 
 	leaderElector := leader.New(
 		rdb,

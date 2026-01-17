@@ -6,6 +6,7 @@ import (
 	"log"
 	"time"
 
+	"github.com/Blake2912/distributed-job-scheduler/common/database_constants"
 	"github.com/Blake2912/distributed-job-scheduler/scheduler-service/redis_dal/commands/queries"
 )
 
@@ -71,5 +72,5 @@ func (w *workerHealthChecks) DeleteWorkerKeys(ctx context.Context, workerId stri
 }
 
 func (w *workerHealthChecks) buildHealthCheckKey(workerId string, jobExecutionId string) string {
-	return fmt.Sprintf("%s_%s", workerId, jobExecutionId)
+	return fmt.Sprintf("%s_%s_%s", database_constants.HEALTH_CHECK_KEY_IDENTIFIER, workerId, jobExecutionId)
 }

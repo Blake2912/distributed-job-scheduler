@@ -12,6 +12,7 @@ const (
 	Todo      JobExecutionStatus = "TODO"
 	Completed JobExecutionStatus = "COMPLETED"
 	Error     JobExecutionStatus = "ERROR"
+	Retry     JobExecutionStatus = "RETRY"
 )
 
 func ParseJobExecutionStatus(s string) (JobExecutionStatus, error) {
@@ -22,6 +23,8 @@ func ParseJobExecutionStatus(s string) (JobExecutionStatus, error) {
 		return Todo, nil
 	case string(Completed):
 		return Completed, nil
+	case string(Retry):
+		return Retry, nil
 	case string(Error):
 		return Error, nil
 	default:
