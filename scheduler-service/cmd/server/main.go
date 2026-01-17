@@ -70,7 +70,7 @@ func main() {
 
 	redissubscriber.PublishRedisKeyExpiryEvent(rdb, ctx, bus)
 	// Future improvment: Use DI
-	container.WorkerHealthCheck.StartTTLExpiryExecution(ctx, bus)
+	container.TTLExpiryConsumer.StartTTLExpiryExecution(ctx, bus)
 
 	//router
 	router := gin.Default()

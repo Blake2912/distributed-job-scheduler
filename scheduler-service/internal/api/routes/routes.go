@@ -11,4 +11,5 @@ func RegisterRoutes(r *gin.Engine, c *container.Container) {
 	registerImageRoutes(api, c)
 	registerSpawnWorkerRoutes(api, c)
 	registerJobsRoutes(api, c)
+	registerWorkerHealthCheckRoutes(api, c)
 }

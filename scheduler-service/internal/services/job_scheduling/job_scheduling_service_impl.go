@@ -10,19 +10,19 @@ import (
 	"github.com/Blake2912/distributed-job-scheduler/common/contracts"
 	"github.com/Blake2912/distributed-job-scheduler/common/database_constants"
 	"github.com/Blake2912/distributed-job-scheduler/common/infra_constants"
-	"github.com/Blake2912/distributed-job-scheduler/scheduler-service/redis_dal/commands"
+	"github.com/Blake2912/distributed-job-scheduler/scheduler-service/redis_dal/commands/queues"
 	"github.com/Blake2912/distributed-job-scheduler/scheduler-service/sql_dal/models"
 	"github.com/Blake2912/distributed-job-scheduler/scheduler-service/sql_dal/repository"
 )
 
 type jobSchedulingService struct {
-	redisQueueCommands     commands.RedisQueueCommands
+	redisQueueCommands     queues.RedisQueueCommands
 	jobRepository          repository.JobRepository
 	jobExecutionRepository repository.JobExecutionRepository
 }
 
 func NewJobSchedulingService(
-	redisQueueCommands commands.RedisQueueCommands,
+	redisQueueCommands queues.RedisQueueCommands,
 	jobRepository repository.JobRepository,
 	jobExecutionRepository repository.JobExecutionRepository,
 ) JobSchedulingService {

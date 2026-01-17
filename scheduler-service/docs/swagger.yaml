@@ -50,6 +50,87 @@ paths:
       summary: Get's image information
       tags:
       - system
+  /healthCheck:
+    delete:
+      consumes:
+      - application/json
+      description: For a given worker
+      parameters:
+      - description: Worker Id
+        in: query
+        name: workerId
+        required: true
+        type: string
+      - description: Job Execution id
+        in: query
+        minimum: 1
+        name: jobExecutionId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: ok
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Invalid input
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Performs worker health checks
+      tags:
+      - HealthCheck
+    get:
+      consumes:
+      - application/json
+      description: For a given worker
+      parameters:
+      - description: Worker Id
+        in: query
+        name: workerId
+        required: true
+        type: string
+      - description: Job Execution id
+        in: query
+        minimum: 1
+        name: jobExecutionId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: ok
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Invalid input
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Performs worker health checks
+      tags:
+      - HealthCheck
   /hello:
     get:
       description: Simple hello endpoint
