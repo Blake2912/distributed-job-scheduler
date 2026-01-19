@@ -52,7 +52,7 @@ func BuildContainer(db *gorm.DB, rdb *redis.Client, ctx context.Context, httpCli
 	// Build Services
 	imageService := imageservice.NewImageService(imageRepo)
 	spawnWorkerService := spawnworkers.NewSpawnWorkerService(httpClient, k8sClient)
-	jobSchedulerService := jobscheduling.NewJobSchedulingService(redisQueueCommands, jobRepository, jobExecutionRepository)
+	jobSchedulerService := jobscheduling.NewJobSchedulingService(redisQueueCommands, jobRepository, jobExecutionRepository, redisQueries)
 	jobsService := jobsservice.NewJobsService(jobRepository)
 	workerHealthCheckService := workerhealthchecks.NewWorkerHealthCheck(redisQueries)
 	workerExpiryService := workerexpirationservice.NewWorkerExpiry(jobExecutionRepository)
