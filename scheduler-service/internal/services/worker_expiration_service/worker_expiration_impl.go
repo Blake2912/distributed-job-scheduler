@@ -9,6 +9,7 @@ import (
 	"github.com/Blake2912/distributed-job-scheduler/common/database_constants"
 	"github.com/Blake2912/distributed-job-scheduler/scheduler-service/internal/state"
 	"github.com/Blake2912/distributed-job-scheduler/scheduler-service/redis_dal/commands/queries"
+	"github.com/Blake2912/distributed-job-scheduler/scheduler-service/sql_dal/contracts"
 	"github.com/Blake2912/distributed-job-scheduler/scheduler-service/sql_dal/repository"
 )
 
@@ -60,11 +61,13 @@ func (w *workerExpiration) HandleWorkerExpiry(ctx context.Context, expiredKey st
 		return
 	}
 
-	jobExecutionIdToStatusMap := make(map[uint]database_constants.JobExecutionStatus)
+	jobExecutionIdToStatusMap := make(map[uint]contracts.JobExecutionUpdate)
 
-	jobExecutionIdToStatusMap[jobExecutionInfo.ID] = database_constants.Retry
+	jobExecutionIdToStatusMap[jobExecutionInfo.ID] = contracts.JobExecutionUpdate{
+		Status: database_constants.Retry,
+	}
 
-	err = w.jobExectionRepository.UpdateJobExecutionStatus(ctx, jobExecutionIdToStatusMap)
+	err = w.jobExectionRepository.UpdateJobExecutions(ctx, jobExecutionIdToStatusMap)
 
 	if err != nil {
 		log.Printf("Error occurred while updating job execution status %s", err.Error())

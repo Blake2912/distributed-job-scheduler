@@ -20,7 +20,7 @@ func NewRedisQueries(rdb *redis.Client) Queries {
 // Checks if key exists if found then resets the TTL else creates a new key with the value
 func (q *queries) CheckAndSetKeyWithTTL(ctx context.Context, key string, value string, ttl time.Duration) error {
 
-	exists, err := q.keyExists(ctx, key)
+	exists, err := q.KeyExists(ctx, key)
 	if err != nil {
 		return err
 	}
@@ -37,9 +37,14 @@ func (q *queries) DeleteKey(ctx context.Context, key string) (int64, error) {
 }
 
 // Returns true if any key exists in the redis database
-func (q *queries) keyExists(ctx context.Context, key string) (bool, error) {
+func (q *queries) KeyExists(ctx context.Context, key string) (bool, error) {
 	res, err := q.rdb.Exists(ctx, key).Result()
 	return res != 0, err
+}
+
+// Gets the value for a particular key
+func (q *queries) GetValue(ctx context.Context, key string) (string, error) {
+	return q.rdb.Get(ctx, key).Result()
 }
 
 // Sets a new key in redis with a specified TTL
