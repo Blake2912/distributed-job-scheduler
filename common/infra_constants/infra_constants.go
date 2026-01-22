@@ -7,3 +7,5 @@ const JobsQueue = "JobsQueue"
 const LeaderAddressKey = "LEADER_ADDRESS"
 
 const HttpsPrefix = "http://"
+
+const LocalHost = "localhost"

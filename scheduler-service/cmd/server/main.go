@@ -10,10 +10,12 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/Blake2912/distributed-job-scheduler/scheduler-service/docs"
 	_ "github.com/Blake2912/distributed-job-scheduler/scheduler-service/docs"
 	"github.com/Blake2912/distributed-job-scheduler/scheduler-service/eventbus"
 	"github.com/Blake2912/distributed-job-scheduler/scheduler-service/httpclient"
 	"github.com/Blake2912/distributed-job-scheduler/scheduler-service/internal/api/routes"
+	schedulerconfig "github.com/Blake2912/distributed-job-scheduler/scheduler-service/internal/config"
 	"github.com/Blake2912/distributed-job-scheduler/scheduler-service/internal/container"
 	"github.com/Blake2912/distributed-job-scheduler/scheduler-service/pod_library/client"
 	"github.com/Blake2912/distributed-job-scheduler/scheduler-service/redis_dal/redisclient"
@@ -75,6 +77,22 @@ func main() {
 	//router
 	router := gin.Default()
 
+	router.Use(func(c *gin.Context) {
+		if host := c.Request.Header.Get("X-Forwarded-Host"); host != "" {
+			c.Request.Host = host
+		}
+
+		if proto := c.Request.Header.Get("X-Forwarded-Proto"); proto != "" {
+			c.Request.URL.Scheme = proto
+		}
+
+		c.Next()
+	})
+
+	docs.SwaggerInfo.Host = ""
+	docs.SwaggerInfo.BasePath = "/api"
+	docs.SwaggerInfo.Schemes = []string{"http"}
+
 	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
 	router.GET("/api/hello", hello)
@@ -82,7 +100,8 @@ func main() {
 
 	routes.RegisterRoutes(router, container)
 
-	address := "localhost:8081"
+	// In production systems we need to bind the address to all interfaces so use :8080 and handle redis insertion properly
+	address := schedulerconfig.GetServerAddress()
 
 	srv := &http.Server{
 		Addr:    address,
@@ -97,7 +116,7 @@ func main() {
 
 	// Run leader election after the server has started and registered its routes
 	err = container.LeaderElector.Run(ctx, func(leaderCtx context.Context) {
-		container.Scheduler.Run(leaderCtx, address)
+		container.Scheduler.Run(leaderCtx)
 	})
 
 	if err != nil {

@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/Blake2912/distributed-job-scheduler/common/infra_constants"
+	schedulerconfig "github.com/Blake2912/distributed-job-scheduler/scheduler-service/internal/config"
 	jobscheduling "github.com/Blake2912/distributed-job-scheduler/scheduler-service/internal/services/job_scheduling"
 	"github.com/Blake2912/distributed-job-scheduler/scheduler-service/internal/state"
 	"github.com/Blake2912/distributed-job-scheduler/scheduler-service/redis_dal/commands/queries"
@@ -25,14 +26,14 @@ func New(jobSchedulingService jobscheduling.JobSchedulingService, redisQueries q
 	}
 }
 
-func (s *Scheduler) Run(ctx context.Context, address string) {
+func (s *Scheduler) Run(ctx context.Context) {
 	log.Println("Scheduler started (leader)")
 	state.SetLeader(true)
 
 	ttl := time.Second * 35
-	formattedAddress := infra_constants.HttpsPrefix + address
+	address := schedulerconfig.GetAdvertisedLeaderAddress()
 
-	err := s.redisQueries.CheckAndSetKeyWithTTL(ctx, infra_constants.LeaderAddressKey, formattedAddress, ttl)
+	err := s.redisQueries.CheckAndSetKeyWithTTL(ctx, infra_constants.LeaderAddressKey, address, ttl)
 	if err != nil {
 		slog.Error("An error occurred while setting the leader address key to redis, leader will be unreachable | %s", "err", err.Error())
 	}

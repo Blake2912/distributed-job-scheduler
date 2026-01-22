@@ -43,6 +43,12 @@ func (p proxyHandler) ProxyHandler() http.HandlerFunc {
 		}
 
 		req.Header = r.Header.Clone()
+		
+		// Fix proxy headers
+		req.Host = ""
+		req.Header.Set("X-Forwarded-For", r.RemoteAddr)
+		req.Header.Set("X-Forwarded-Host", r.Host)
+		req.Header.Set("X-Forwarded-Proto", "http")
 
 		resp, err := http.DefaultClient.Do(req)
 		if err != nil {
