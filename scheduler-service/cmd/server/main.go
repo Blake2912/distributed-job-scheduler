@@ -100,7 +100,6 @@ func main() {
 
 	routes.RegisterRoutes(router, container)
 
-	// In production systems we need to bind the address to all interfaces so use :8080 and handle redis insertion properly
 	address := schedulerconfig.GetServerAddress()
 
 	srv := &http.Server{
