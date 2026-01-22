@@ -82,8 +82,10 @@ func main() {
 
 	routes.RegisterRoutes(router, container)
 
+	address := "localhost:8081"
+
 	srv := &http.Server{
-		Addr:    ":8081",
+		Addr:    address,
 		Handler: router,
 	}
 
@@ -95,7 +97,7 @@ func main() {
 
 	// Run leader election after the server has started and registered its routes
 	err = container.LeaderElector.Run(ctx, func(leaderCtx context.Context) {
-		container.Scheduler.Run(leaderCtx)
+		container.Scheduler.Run(leaderCtx, address)
 	})
 
 	if err != nil {
