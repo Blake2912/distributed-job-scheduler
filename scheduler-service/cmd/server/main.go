@@ -11,11 +11,13 @@ import (
 	"time"
 
 	_ "github.com/Blake2912/distributed-job-scheduler/scheduler-service/docs"
+	"github.com/Blake2912/distributed-job-scheduler/scheduler-service/eventbus"
 	"github.com/Blake2912/distributed-job-scheduler/scheduler-service/httpclient"
 	"github.com/Blake2912/distributed-job-scheduler/scheduler-service/internal/api/routes"
 	"github.com/Blake2912/distributed-job-scheduler/scheduler-service/internal/container"
 	"github.com/Blake2912/distributed-job-scheduler/scheduler-service/pod_library/client"
 	"github.com/Blake2912/distributed-job-scheduler/scheduler-service/redis_dal/redisclient"
+	"github.com/Blake2912/distributed-job-scheduler/scheduler-service/redis_dal/redissubscriber"
 	"github.com/Blake2912/distributed-job-scheduler/scheduler-service/sql_dal/config"
 	"github.com/gin-gonic/gin"
 	"github.com/redis/go-redis/v9"
@@ -60,7 +62,15 @@ func main() {
 	}
 
 	// Application startup
+	// Future Improvmement: Move the parameters into a struct to make it readable if the parameters grows.
 	container := container.BuildContainer(config.DB, rdb, ctx, httpClient, k8sClient)
+
+	// Event bus
+	bus := eventbus.NewEventBus[eventbus.TTLExpiredEvent](500)
+
+	redissubscriber.PublishRedisKeyExpiryEvent(rdb, ctx, bus)
+	// Future improvment: Use DI
+	container.TTLExpiryConsumer.StartTTLExpiryExecution(ctx, bus)
 
 	//router
 	router := gin.Default()
