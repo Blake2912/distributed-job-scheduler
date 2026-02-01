@@ -66,7 +66,7 @@ func BuildContainer(db *gorm.DB, rdb *redis.Client, ctx context.Context, httpCli
 		10*time.Second,     //placeholder TTL
 	)
 
-	sched := scheduler.New(jobSchedulerService)
+	sched := scheduler.New(jobSchedulerService, redisQueries)
 
 	// Build Handlers and return them
 	imageHandler := imagehandler.New(imageService)

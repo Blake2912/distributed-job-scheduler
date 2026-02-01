@@ -10,4 +10,5 @@ type Queries interface {
 	DeleteKey(ctx context.Context, key string) (int64, error)
 	KeyExists(ctx context.Context, key string) (bool, error)
 	GetValue(ctx context.Context, key string) (string, error)
+	ResetTTL(ctx context.Context, key string, ttl time.Duration) error
 }

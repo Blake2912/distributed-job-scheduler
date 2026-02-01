@@ -27,7 +27,7 @@ func (q *queries) CheckAndSetKeyWithTTL(ctx context.Context, key string, value s
 	if !exists {
 		return q.setKeyWithTTL(ctx, key, value, ttl)
 	} else {
-		return q.resetTTL(ctx, key, ttl)
+		return q.ResetTTL(ctx, key, ttl)
 	}
 }
 
@@ -53,6 +53,6 @@ func (q *queries) setKeyWithTTL(ctx context.Context, key string, value string, t
 }
 
 // Resets TTL for a given Key in redis
-func (q *queries) resetTTL(ctx context.Context, key string, ttl time.Duration) error {
+func (q *queries) ResetTTL(ctx context.Context, key string, ttl time.Duration) error {
 	return q.rdb.Expire(ctx, key, ttl).Err()
 }
