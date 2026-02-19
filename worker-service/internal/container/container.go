@@ -17,13 +17,13 @@ type Container struct {
 	//registry
 	ExecutorRegistry executor.Registry
 
-	// Core execution
+	//core execution
 	Worker *worker.Worker
 
-	// Clients
+	//clients
 	SchedulerClient client.SchedulerClient
 
-	// Optional: handlers / executors
+	//executors
 	JobExecutor executor.Executor
 }
 

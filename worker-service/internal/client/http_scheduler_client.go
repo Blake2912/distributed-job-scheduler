@@ -6,8 +6,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strconv"
 
 	"github.com/Blake2912/distributed-job-scheduler/common/constants/worker_constants"
+	"github.com/Blake2912/distributed-job-scheduler/common/contracts"
 )
 
 type HTTPSchedulerClient struct {
@@ -25,8 +27,8 @@ func NewHTTPSchedulerClient(
 	}
 }
 
-func (c *HTTPSchedulerClient) LeaseJob(ctx context.Context) (*LeaseJobResponse, error) {
-	url := fmt.Sprintf(worker_constants.LeaseEndpoint, c.baseURL)
+func (c *HTTPSchedulerClient) LeaseJob(ctx context.Context) (*contracts.JobToExecute, error) {
+	url := fmt.Sprintf(worker_constants.DispatchJobEndpoint, c.baseURL)
 
 	req, err := http.NewRequestWithContext(
 		ctx,
@@ -59,7 +61,7 @@ func (c *HTTPSchedulerClient) LeaseJob(ctx context.Context) (*LeaseJobResponse, 
 	}
 
 	//decode response
-	var parsed LeaseJobResponse
+	var parsed contracts.JobToExecute
 
 	err = json.NewDecoder(resp.Body).Decode(&parsed)
 	if err != nil {
@@ -70,7 +72,7 @@ func (c *HTTPSchedulerClient) LeaseJob(ctx context.Context) (*LeaseJobResponse, 
 	fmt.Println(parsed.JobType)
 	fmt.Println(parsed.Payload)
 
-	return &LeaseJobResponse{
+	return &contracts.JobToExecute{
 		JobID:   parsed.JobID,
 		JobType: parsed.JobType,
 		Payload: parsed.Payload,
@@ -79,15 +81,15 @@ func (c *HTTPSchedulerClient) LeaseJob(ctx context.Context) (*LeaseJobResponse, 
 
 func (c *HTTPSchedulerClient) ReportCompletion(
 	ctx context.Context,
-	jobId string,
+	jobId uint,
 	status string,
 	executionError string,
 	retryable bool,
 ) error {
-	url := fmt.Sprintf(worker_constants.ReportCompletionEndpoint, c.baseURL, jobId)
+	url := fmt.Sprintf(worker_constants.ReportCompletionEndpoint, c.baseURL, strconv.FormatUint(uint64(jobId), 10))
 
 	body, err := json.Marshal(
-		ReportCompletionRequest{
+		contracts.ReportCompletionRequest{
 			Status:    status,
 			Error:     executionError,
 			Retryable: retryable,

@@ -28,3 +28,9 @@ func (j *JobRepository) GetJobsToSchedule(ctx context.Context, currentTime time.
 func (j *JobRepository) CreateJobs(ctx context.Context, jobs []models.Jobs) error {
 	return j.db.Create(&jobs).Error
 }
+
+func (j *JobRepository) GetJobById(ctx context.Context, id uint) (models.Jobs, error) {
+	return gorm.G[models.Jobs](j.db).
+		Where("id = ?", id).
+		First(ctx)
+}

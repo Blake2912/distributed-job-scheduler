@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/Blake2912/distributed-job-scheduler/common/constants/worker_constants"
+	"github.com/Blake2912/distributed-job-scheduler/common/contracts"
 	"github.com/Blake2912/distributed-job-scheduler/worker-service/internal/client"
 	"github.com/Blake2912/distributed-job-scheduler/worker-service/internal/executor"
 )
@@ -57,7 +58,7 @@ func (w *Worker) Run(ctx context.Context) {
 	}
 }
 
-func (w *Worker) executeJob(ctx context.Context, job *client.LeaseJobResponse) {
+func (w *Worker) executeJob(ctx context.Context, job *contracts.JobToExecute) {
 
 	log.Printf("Executing job %s\n", job.JobID)
 

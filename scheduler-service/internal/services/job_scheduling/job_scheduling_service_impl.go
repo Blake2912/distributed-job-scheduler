@@ -72,7 +72,7 @@ func (j *jobSchedulingService) ScheduleJobs(ctx context.Context) error {
 
 	latestExecutions, error := j.jobExecutionRepository.GetLatestJobExecutions(ctx, validJobIds)
 	if error != nil {
-		log.Printf("An error occurred while quering jobs execution data %s \n", error.Error())
+		log.Printf("An error occurred while querying jobs execution data %s \n", error.Error())
 		return error
 	}
 

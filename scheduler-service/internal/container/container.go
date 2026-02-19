@@ -8,6 +8,7 @@ import (
 	imagehandler "github.com/Blake2912/distributed-job-scheduler/scheduler-service/internal/api/handlers/image_handler"
 	jobshandler "github.com/Blake2912/distributed-job-scheduler/scheduler-service/internal/api/handlers/jobs_handler"
 	spawnworkersHandler "github.com/Blake2912/distributed-job-scheduler/scheduler-service/internal/api/handlers/spawn_workers"
+	workerhandler "github.com/Blake2912/distributed-job-scheduler/scheduler-service/internal/api/handlers/worker_handler"
 	workerhealthcheckhandler "github.com/Blake2912/distributed-job-scheduler/scheduler-service/internal/api/handlers/worker_health_check_handler"
 	ttlexpiryconsumers "github.com/Blake2912/distributed-job-scheduler/scheduler-service/internal/consumers/ttl_expiry_consumers"
 	imageservice "github.com/Blake2912/distributed-job-scheduler/scheduler-service/internal/services/image_service"
@@ -16,6 +17,7 @@ import (
 	leader "github.com/Blake2912/distributed-job-scheduler/scheduler-service/internal/services/leader_election"
 	"github.com/Blake2912/distributed-job-scheduler/scheduler-service/internal/services/scheduler"
 	spawnworkers "github.com/Blake2912/distributed-job-scheduler/scheduler-service/internal/services/spawn_workers"
+	"github.com/Blake2912/distributed-job-scheduler/scheduler-service/internal/services/worker"
 	workerexpirationservice "github.com/Blake2912/distributed-job-scheduler/scheduler-service/internal/services/worker_expiration_service"
 	workerhealthchecks "github.com/Blake2912/distributed-job-scheduler/scheduler-service/internal/services/worker_health_checks"
 	"github.com/Blake2912/distributed-job-scheduler/scheduler-service/pod_library/client"
@@ -33,6 +35,7 @@ type Container struct {
 	Scheduler                *scheduler.Scheduler
 	JobsHandler              *jobshandler.JobsHandler
 	WorkerHealthCheckHandler *workerhealthcheckhandler.WorkerHealthCheckHandler
+	WorkerHandler            *workerhandler.WorkerHandler
 
 	LeaderElector leader.LeaderElection
 	// Consumers
@@ -56,6 +59,7 @@ func BuildContainer(db *gorm.DB, rdb *redis.Client, ctx context.Context, httpCli
 	jobsService := jobsservice.NewJobsService(jobRepository)
 	workerHealthCheckService := workerhealthchecks.NewWorkerHealthCheck(redisQueries)
 	workerExpiryService := workerexpirationservice.NewWorkerExpiry(jobExecutionRepository)
+	workerJobDispatchService := worker.NewWorkerJobDispatchService(redisQueueCommands, jobRepository, jobExecutionRepository, redisQueries)
 
 	// Consumers
 	ttlExpiryConsumer := ttlexpiryconsumers.NewTTLExpiryConsumer(workerExpiryService)
@@ -73,6 +77,7 @@ func BuildContainer(db *gorm.DB, rdb *redis.Client, ctx context.Context, httpCli
 	spawnWorkersHandler := spawnworkersHandler.NewSpawnWokersHandler(spawnWorkerService)
 	jobsHandler := jobshandler.New(jobsService)
 	workerHealthCheckHandler := workerhealthcheckhandler.NewWorkerHealthCheckHander(workerHealthCheckService)
+	workerhandler := workerhandler.NewWorkerHandler(workerJobDispatchService)
 
 	return &Container{
 		ImageHandler:             imageHandler,
@@ -82,5 +87,6 @@ func BuildContainer(db *gorm.DB, rdb *redis.Client, ctx context.Context, httpCli
 		JobsHandler:              jobsHandler,
 		TTLExpiryConsumer:        ttlExpiryConsumer,
 		WorkerHealthCheckHandler: workerHealthCheckHandler,
+		WorkerHandler:            workerhandler,
 	}
 }

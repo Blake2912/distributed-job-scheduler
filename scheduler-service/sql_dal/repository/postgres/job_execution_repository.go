@@ -122,3 +122,23 @@ func createJobExecution(jobId uint, status database_constants.JobExecutionStatus
 		RetryCount: 1, // Keeping it as 1 for now tomorrow we can change this to make it configurable from service end
 	}
 }
+
+func (r *JobExecutionRepository) MarkRunning(
+	ctx context.Context,
+	execID uint,
+) error {
+
+	result := r.db.WithContext(ctx).
+		Model(&models.JobExecution{}).
+		Where("id = ? AND status IN (?, ?)",
+			execID,
+			database_constants.Todo,
+			database_constants.Retry,
+		).
+		Updates(map[string]interface{}{
+			"status":     database_constants.Running,
+			"started_at": time.Now(),
+		})
+
+	return result.Error
+}

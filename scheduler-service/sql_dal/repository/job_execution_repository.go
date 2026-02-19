@@ -13,4 +13,5 @@ type JobExecutionRepository interface {
 	InsertNewJobExecutions(ctx context.Context, jobIdToStatusMap map[uint]database_constants.JobExecutionStatus) error
 	GetJobExecutionInfoWithExecutionId(ctx context.Context, jobExecutionId uint) (models.JobExecution, error)
 	UpdateJobExecutions(ctx context.Context, jobExecutionUpdates map[uint]contracts.JobExecutionUpdate) error
+	MarkRunning(ctx context.Context, execID uint) error
 }
