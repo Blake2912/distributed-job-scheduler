@@ -8,5 +8,5 @@ import (
 func registerWorkerRoutes(r *gin.RouterGroup, c *container.Container) {
 	worker := r.Group("/worker")
 
-	worker.GET("jobs/lease", c.WorkerHandler.DispatchNext)
+	worker.GET("jobs/lease", c.WorkerHandler.LeaseNextJob)
 }
