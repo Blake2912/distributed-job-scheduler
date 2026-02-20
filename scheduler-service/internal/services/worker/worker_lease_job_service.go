@@ -7,5 +7,5 @@ import (
 )
 
 type WorkerJobDispatchService interface {
-	DispatchNextJob(ctx context.Context) (*contracts.JobToExecute, error)
+	LeaseJob(ctx context.Context) (*contracts.JobToExecute, error)
 }

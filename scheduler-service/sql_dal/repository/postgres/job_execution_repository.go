@@ -6,11 +6,13 @@ import (
 	"strings"
 	"time"
 
+	"github.com/Blake2912/distributed-job-scheduler/common/constants/worker_constants"
 	"github.com/Blake2912/distributed-job-scheduler/common/database_constants"
 	"github.com/Blake2912/distributed-job-scheduler/scheduler-service/sql_dal/contracts"
 	"github.com/Blake2912/distributed-job-scheduler/scheduler-service/sql_dal/models"
 	"github.com/Blake2912/distributed-job-scheduler/scheduler-service/sql_dal/repository"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 type JobExecutionRepository struct {
@@ -39,7 +41,7 @@ func (je *JobExecutionRepository) GetLatestJobExecutions(ctx context.Context, jo
 	return executions, err
 }
 
-func (je *JobExecutionRepository) InsertNewJobExecutions(ctx context.Context, jobIdToStatusMap map[uint]database_constants.JobExecutionStatus) error {
+func (je *JobExecutionRepository) InsertNewJobExecutions(ctx context.Context, jobIdToStatusMap map[uint]contracts.JobExecutionCreationData) error {
 
 	jobExecutionsToInsert := make([]models.JobExecution, 0, len(jobIdToStatusMap))
 
@@ -114,31 +116,61 @@ func (je *JobExecutionRepository) UpdateJobExecutions(ctx context.Context, jobEx
 	return je.db.Exec(query, args...).Error
 }
 
-func createJobExecution(jobId uint, status database_constants.JobExecutionStatus) models.JobExecution {
+func createJobExecution(jobId uint, data contracts.JobExecutionCreationData) models.JobExecution {
 	return models.JobExecution{
-		JobID:      jobId,
-		Status:     status,
-		CreatedAt:  time.Now().UTC(),
-		RetryCount: 1, // Keeping it as 1 for now tomorrow we can change this to make it configurable from service end
+		JobID:       jobId,
+		Status:      database_constants.JobExecutionStatus(data.Status),
+		ScheduledAt: data.ScheduledAt,
+		CreatedAt:   time.Now().UTC(),
+		RetryCount:  1, // Keeping it as 1 for now tomorrow we can change this to make it configurable from service end
 	}
 }
 
-func (r *JobExecutionRepository) MarkRunning(
-	ctx context.Context,
-	execID uint,
-) error {
+func (r *JobExecutionRepository) GetJobAndMarkExecutionAsRunning(ctx context.Context) (*models.JobExecution, error) {
 
-	result := r.db.WithContext(ctx).
-		Model(&models.JobExecution{}).
-		Where("id = ? AND status IN (?, ?)",
-			execID,
+	tx := r.db.WithContext(ctx).Begin()
+
+	var exec models.JobExecution
+
+	err := tx.Preload("Job").
+		Clauses(clause.Locking{Strength: "UPDATE", Options: "SKIP LOCKED"}).
+		Where(`
+			(status = ? AND scheduled_at <= NOW())
+			OR
+			(status = ? AND retry_at <= NOW())
+		`,
 			database_constants.Todo,
 			database_constants.Retry,
 		).
-		Updates(map[string]interface{}{
-			"status":     database_constants.Running,
-			"started_at": time.Now(),
-		})
+		Order("scheduled_at ASC").
+		Limit(1).
+		First(&exec).Error
 
-	return result.Error
+	if err == gorm.ErrRecordNotFound {
+		tx.Rollback()
+		return nil, nil
+	}
+
+	if err != nil {
+		tx.Rollback()
+		return nil, err
+	}
+
+	leaseExpiry := time.Now().Add(worker_constants.LeaseDuration)
+
+	err = tx.Model(&models.JobExecution{}).
+		Where("id = ?", exec.ID).
+		Updates(map[string]interface{}{
+			"status":       database_constants.Running,
+			"lease_expiry": leaseExpiry,
+		}).Error
+
+	if err != nil {
+		tx.Rollback()
+		return nil, err
+	}
+
+	tx.Commit()
+
+	return &exec, nil
 }

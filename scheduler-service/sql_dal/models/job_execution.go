@@ -13,11 +13,15 @@ type JobExecution struct {
 	CreatedAt time.Time `gorm:"index:idx_job_exec_latest,priority:2,sort:desc"`
 
 	Status      database_constants.JobExecutionStatus `gorm:"type:varchar(50)"`
-	StartedAt   time.Time
-	CompletedAt time.Time
+	StartedAt   *time.Time
+	ScheduledAt time.Time
+	RetryAt     *time.Time
+	CompletedAt *time.Time
 	Comments    string
 	RetryCount  uint
+	LeaseExpiry *time.Time
+	UpdatedAt   time.Time      `gorm:"autoUpdateTime"`
+	DeletedAt   gorm.DeletedAt `gorm:"index"`
 
-	UpdatedAt time.Time      `gorm:"autoUpdateTime"`
-	DeletedAt gorm.DeletedAt `gorm:"index"`
+	Job Jobs `gorm:"foreignKey:JobID"`
 }

@@ -82,7 +82,7 @@ func (j *jobSchedulingService) ScheduleJobs(ctx context.Context) error {
 		latestExecutionsMap[exec.JobID] = exec
 	}
 
-	newJobsToExecute := make(map[uint]database_constants.JobExecutionStatus, len(validJobIds))
+	newJobsToExecute := make(map[uint]dalcontracts.JobExecutionCreationData, len(validJobIds))
 	newJobsIdsToPushToQueue := make([]uint, 0, len(validJobIds))
 
 	today := time.Now().In(time.UTC)
@@ -100,6 +100,8 @@ func (j *jobSchedulingService) ScheduleJobs(ctx context.Context) error {
 			log.Printf("An error occurred while deserializing Metadata field in jobs %s | So skipping scheduling of job: %d", err.Error(), job)
 			continue
 		}
+
+		scheduledAtTime := GetScheduledAtTime(jobInfo.NextRunAt.Time)
 
 		if execFound {
 			createdAt := jobExecution.CreatedAt
@@ -198,12 +200,18 @@ func (j *jobSchedulingService) ScheduleJobs(ctx context.Context) error {
 
 			// Schedule only if the job is a recurring job
 			if jobMetaData.IsRecurringJob {
-				newJobsToExecute[job] = database_constants.Todo
+				newJobsToExecute[job] = dalcontracts.JobExecutionCreationData{
+					Status:      string(database_constants.Todo),
+					ScheduledAt: scheduledAtTime,
+				}
 				newJobsIdsToPushToQueue = append(newJobsIdsToPushToQueue, job)
 			}
 
 		} else {
-			newJobsToExecute[job] = database_constants.Todo
+			newJobsToExecute[job] = dalcontracts.JobExecutionCreationData{
+				Status:      string(database_constants.Todo),
+				ScheduledAt: scheduledAtTime,
+			}
 			newJobsIdsToPushToQueue = append(newJobsIdsToPushToQueue, job)
 		}
 	}
@@ -222,4 +230,14 @@ func (j *jobSchedulingService) ScheduleJobs(ctx context.Context) error {
 	log.Printf("Completed pushing jobs to queue now inserting executions into database")
 
 	return j.jobExecutionRepository.InsertNewJobExecutions(ctx, newJobsToExecute)
+}
+
+func GetScheduledAtTime(runTime time.Time) time.Time {
+	now := time.Now()
+	year, month, day := now.Date()
+
+	hour, min, sec := runTime.Clock()
+	combined := time.Date(year, month, day, hour, min, sec, 0, runTime.Location())
+
+	return combined
 }

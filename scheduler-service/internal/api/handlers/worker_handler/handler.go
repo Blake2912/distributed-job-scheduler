@@ -17,19 +17,18 @@ func NewWorkerHandler(svc worker.WorkerJobDispatchService) *WorkerHandler {
 	}
 }
 
-// DispatchNext godoc
-// @Summary      Dispatch next job
+// LeaseNextJob godoc
+// @Summary      Leases next job
 // @Description  Provides next job to worker for execution
 // @Tags         worker
 // @Accept       json
 // @Produce      json
-// @Param        jobs body []jobs.CreateJobsPayload true "List of jobs to create"
 // @Success      201 {object} contracts.JobToExecute
 // @Failure      400 {object} map[string]string "Invalid request payload"
 // @Failure      500 {object} map[string]string "Internal server error"
-// @Router       /worker/jobs/dispatch [get]`
-func (h *WorkerHandler) DispatchNext(c *gin.Context) {
-	jobToExecute, err := h.svc.DispatchNextJob(c.Request.Context())
+// @Router       /worker/jobs/lease [get]`
+func (h *WorkerHandler) LeaseNextJob(c *gin.Context) {
+	jobToExecute, err := h.svc.LeaseJob(c.Request.Context())
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return

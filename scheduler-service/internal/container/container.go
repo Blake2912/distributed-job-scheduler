@@ -59,7 +59,7 @@ func BuildContainer(db *gorm.DB, rdb *redis.Client, ctx context.Context, httpCli
 	jobsService := jobsservice.NewJobsService(jobRepository)
 	workerHealthCheckService := workerhealthchecks.NewWorkerHealthCheck(redisQueries)
 	workerExpiryService := workerexpirationservice.NewWorkerExpiry(jobExecutionRepository)
-	workerJobDispatchService := worker.NewWorkerJobDispatchService(redisQueueCommands, jobRepository, jobExecutionRepository, redisQueries)
+	workerLeaseJobService := worker.NewWorkerLeaseJobService(jobExecutionRepository)
 
 	// Consumers
 	ttlExpiryConsumer := ttlexpiryconsumers.NewTTLExpiryConsumer(workerExpiryService)
@@ -77,7 +77,7 @@ func BuildContainer(db *gorm.DB, rdb *redis.Client, ctx context.Context, httpCli
 	spawnWorkersHandler := spawnworkersHandler.NewSpawnWokersHandler(spawnWorkerService)
 	jobsHandler := jobshandler.New(jobsService)
 	workerHealthCheckHandler := workerhealthcheckhandler.NewWorkerHealthCheckHander(workerHealthCheckService)
-	workerhandler := workerhandler.NewWorkerHandler(workerJobDispatchService)
+	workerhandler := workerhandler.NewWorkerHandler(workerLeaseJobService)
 
 	return &Container{
 		ImageHandler:             imageHandler,
