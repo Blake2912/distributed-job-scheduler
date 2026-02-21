@@ -4,6 +4,7 @@ import (
 	"context"
 	"log"
 	"math/rand"
+	"strconv"
 	"time"
 
 	"github.com/Blake2912/distributed-job-scheduler/common/constants/worker_constants"
@@ -59,8 +60,8 @@ func (w *Worker) Run(ctx context.Context) {
 }
 
 func (w *Worker) executeJob(ctx context.Context, job *contracts.JobToExecute) {
-
-	log.Printf("Executing job %s\n", job.JobID)
+	execId := strconv.FormatUint(uint64(job.JobExecutionID), 10)
+	log.Printf("Executing job for execution_id %s\n", execId)
 
 	//get executor for the job type
 	exec, err := w.registry.Get(job.JobType)
@@ -68,7 +69,7 @@ func (w *Worker) executeJob(ctx context.Context, job *contracts.JobToExecute) {
 	if err != nil {
 		log.Println("Unknown job type:", job.JobType)
 
-		reportErr := w.client.ReportCompletion(ctx, job.JobID, worker_constants.FAILED, err.Error(), false)
+		reportErr := w.client.ReportCompletion(ctx, job.JobExecutionID, worker_constants.FAILED, err.Error(), false)
 		if reportErr != nil {
 			log.Println("Failed reporting failure:", reportErr)
 		}
@@ -77,18 +78,18 @@ func (w *Worker) executeJob(ctx context.Context, job *contracts.JobToExecute) {
 
 	err = exec.Execute(ctx, job.Payload)
 	if err != nil {
-		log.Printf("Job failed ID=%s Error=%v\n", job.JobID, err)
+		log.Printf("Job failed Exec_ID=%s Error=%v\n", execId, err)
 
 		isRetryable := executor.IsRetryable(err)
 
 		// Scheduler decides retry logic
-		_ = w.client.ReportCompletion(ctx, job.JobID, worker_constants.FAILED, err.Error(), isRetryable)
+		_ = w.client.ReportCompletion(ctx, job.JobExecutionID, worker_constants.FAILED, err.Error(), isRetryable)
 		return
 	}
 
-	log.Println("Job succeeded:", job.JobID)
+	log.Println("Job succeeded for exec Id:", job.JobExecutionID)
 
-	reportErr := w.client.ReportCompletion(ctx, job.JobID, worker_constants.SUCCESS, "", false)
+	reportErr := w.client.ReportCompletion(ctx, job.JobExecutionID, worker_constants.SUCCESS, "", false)
 	if reportErr != nil {
 		log.Println("Failed reporting success:", reportErr)
 	}

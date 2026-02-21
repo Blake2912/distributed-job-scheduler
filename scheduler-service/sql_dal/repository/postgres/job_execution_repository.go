@@ -67,8 +67,8 @@ func (je *JobExecutionRepository) UpdateJobExecutions(ctx context.Context, jobEx
 	var (
 		ids []uint
 
-		statusCases     []string
-		retryCountCases []string
+		statusCases []string
+		//retryCountCases []string
 
 		args []any
 	)
@@ -79,10 +79,12 @@ func (je *JobExecutionRepository) UpdateJobExecutions(ctx context.Context, jobEx
 		statusCases = append(statusCases, "WHEN ? THEN ?")
 		args = append(args, id, upd.Status)
 
-		if upd.RetryCount != nil {
-			retryCountCases = append(retryCountCases, "WHEN ? THEN ?")
-			args = append(args, id, *upd.RetryCount)
-		}
+		/*
+			if upd.RetryCount != nil {
+				retryCountCases = append(retryCountCases, "WHEN ? THEN ?")
+				args = append(args, id, *upd.RetryCount)
+			}
+		*/
 	}
 
 	var setParts []string
@@ -94,12 +96,14 @@ func (je *JobExecutionRepository) UpdateJobExecutions(ctx context.Context, jobEx
 		))
 	}
 
-	if len(retryCountCases) > 0 {
-		setParts = append(setParts, fmt.Sprintf(
-			"retry_count = CASE id %s END",
-			strings.Join(retryCountCases, " "),
-		))
-	}
+	/*
+		if len(retryCountCases) > 0 {
+			setParts = append(setParts, fmt.Sprintf(
+				"retry_count = CASE id %s END",
+				strings.Join(retryCountCases, " "),
+			))
+		}
+	*/
 
 	if len(setParts) == 0 {
 		return nil
@@ -118,11 +122,11 @@ func (je *JobExecutionRepository) UpdateJobExecutions(ctx context.Context, jobEx
 
 func createJobExecution(jobId uint, data contracts.JobExecutionCreationData) models.JobExecution {
 	return models.JobExecution{
-		JobID:       jobId,
-		Status:      database_constants.JobExecutionStatus(data.Status),
-		ScheduledAt: data.ScheduledAt,
-		CreatedAt:   time.Now().UTC(),
-		RetryCount:  1, // Keeping it as 1 for now tomorrow we can change this to make it configurable from service end
+		JobID:              jobId,
+		Status:             database_constants.JobExecutionStatus(data.Status),
+		ScheduledAt:        data.ScheduledAt,
+		CreatedAt:          time.Now().UTC(),
+		MaxAttemptsAllowed: 1, // Keeping it as 1 for now tomorrow we can change this to make it configurable from service end
 	}
 }
 
@@ -161,8 +165,9 @@ func (r *JobExecutionRepository) GetJobAndMarkExecutionAsRunning(ctx context.Con
 	err = tx.Model(&models.JobExecution{}).
 		Where("id = ?", exec.ID).
 		Updates(map[string]interface{}{
-			"status":       database_constants.Running,
-			"lease_expiry": leaseExpiry,
+			"status":        database_constants.Running,
+			"lease_expiry":  leaseExpiry,
+			"attempt_count": gorm.Expr("attempt_count + 1"),
 		}).Error
 
 	if err != nil {
@@ -173,4 +178,10 @@ func (r *JobExecutionRepository) GetJobAndMarkExecutionAsRunning(ctx context.Con
 	tx.Commit()
 
 	return &exec, nil
+}
+
+func (r *JobExecutionRepository) UpdateJobExecutionStatus(ctx context.Context, execId uint, status database_constants.JobExecutionStatus) error {
+	return r.db.Model(&models.JobExecution{}).
+		Where("id = ?", execId).
+		Update("status", status).Error
 }

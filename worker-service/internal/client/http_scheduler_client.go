@@ -28,7 +28,7 @@ func NewHTTPSchedulerClient(
 }
 
 func (c *HTTPSchedulerClient) LeaseJob(ctx context.Context) (*contracts.JobToExecute, error) {
-	url := fmt.Sprintf(worker_constants.DispatchJobEndpoint, c.baseURL)
+	url := fmt.Sprintf(worker_constants.LeaseJobExecutionEndpoint, c.baseURL)
 
 	req, err := http.NewRequestWithContext(
 		ctx,
@@ -68,25 +68,25 @@ func (c *HTTPSchedulerClient) LeaseJob(ctx context.Context) (*contracts.JobToExe
 		return nil, err
 	}
 
-	fmt.Println(parsed.JobID)
+	fmt.Println(parsed.JobExecutionID)
 	fmt.Println(parsed.JobType)
 	fmt.Println(parsed.Payload)
 
 	return &contracts.JobToExecute{
-		JobID:   parsed.JobID,
-		JobType: parsed.JobType,
-		Payload: parsed.Payload,
+		JobExecutionID: parsed.JobExecutionID,
+		JobType:        parsed.JobType,
+		Payload:        parsed.Payload,
 	}, nil
 }
 
 func (c *HTTPSchedulerClient) ReportCompletion(
 	ctx context.Context,
-	jobId uint,
+	jobExecId uint,
 	status string,
 	executionError string,
 	retryable bool,
 ) error {
-	url := fmt.Sprintf(worker_constants.ReportCompletionEndpoint, c.baseURL, strconv.FormatUint(uint64(jobId), 10))
+	url := fmt.Sprintf(worker_constants.ReportCompletionEndpoint, c.baseURL, strconv.FormatUint(uint64(jobExecId), 10))
 
 	body, err := json.Marshal(
 		contracts.ReportCompletionRequest{

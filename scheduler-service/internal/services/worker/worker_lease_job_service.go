@@ -6,6 +6,7 @@ import (
 	"github.com/Blake2912/distributed-job-scheduler/common/contracts"
 )
 
-type WorkerJobDispatchService interface {
+type WorkerLeaseJobService interface {
 	LeaseJob(ctx context.Context) (*contracts.JobToExecute, error)
+	CompleteJobExecution(ctx context.Context, jobExecId uint, request contracts.ReportCompletionRequest) error
 }

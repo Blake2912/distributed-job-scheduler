@@ -7,8 +7,8 @@ import (
 )
 
 type JobExecutionUpdate struct {
-	Status     database_constants.JobExecutionStatus
-	RetryCount *int
+	Status  database_constants.JobExecutionStatus
+	RetryAt time.Time
 }
 
 type JobExecutionCreationData struct {
