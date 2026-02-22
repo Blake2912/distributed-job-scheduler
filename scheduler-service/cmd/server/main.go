@@ -115,7 +115,12 @@ func main() {
 
 	// Run leader election after the server has started and registered its routes
 	err = container.LeaderElector.Run(ctx, func(leaderCtx context.Context) {
-		container.Scheduler.Run(leaderCtx)
+
+		//scheduler loop
+		go container.Scheduler.Run(leaderCtx)
+
+		//Recovery loop to mark executions with expired leases as Retry
+		go container.Scheduler.StartExpiryRecoveryLoop(leaderCtx)
 	})
 
 	if err != nil {

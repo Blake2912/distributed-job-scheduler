@@ -185,3 +185,13 @@ func (r *JobExecutionRepository) UpdateJobExecutionStatus(ctx context.Context, e
 		Where("id = ?", execId).
 		Update("status", status).Error
 }
+
+func (r *JobExecutionRepository) MarkExpiredLeasesAsRetry(ctx context.Context) error {
+	return r.db.WithContext(ctx).
+		Model(&models.JobExecution{}).
+		Where("status = 'RUNNING' AND lease_expiry < NOW()").
+		Updates(map[string]interface{}{
+			"status":   "RETRY",
+			"retry_at": time.Now(),
+		}).Error
+}
