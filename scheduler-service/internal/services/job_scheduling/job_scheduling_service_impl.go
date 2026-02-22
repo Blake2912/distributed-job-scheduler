@@ -80,10 +80,6 @@ func (j *jobSchedulingService) ScheduleJobs(ctx context.Context) error {
 	}
 
 	newJobsToExecute := make(map[uint]dalcontracts.JobExecutionCreationData, len(validJobIds))
-	//newJobsIdsToPushToQueue := make([]uint, 0, len(validJobIds))
-
-	//today := time.Now().In(time.UTC)
-	//jobExecutionIdToStatusMap := make(map[uint]dalcontracts.JobExecutionUpdate)
 
 	for _, job := range validJobIds {
 		_, execFound := latestExecutionsMap[job]
@@ -101,112 +97,12 @@ func (j *jobSchedulingService) ScheduleJobs(ctx context.Context) error {
 		scheduledAtTime := GetScheduledAtTime(jobInfo.NextRunAt.Time)
 
 		if execFound {
-			//Permanent Failure and Error will be decided in job completion flow
-
-			/*
-				createdAt := jobExecution.CreatedAt
-
-				// Job already executed for the day so skip it
-				if today.Year() == createdAt.Year() && today.YearDay() == createdAt.YearDay() {
-
-
-					/*
-						if jobExecution.Status == database_constants.Error && jobExecution.RetryCount > 0 {
-							newRetryCount := int(jobExecution.RetryCount - 1)
-
-							jobExecutionIdToStatusMap[jobExecution.ID] = dalcontracts.JobExecutionUpdate{
-								Status:     database_constants.Retry,
-								RetryCount: &newRetryCount,
-							}
-
-							if err = j.jobExecutionRepository.UpdateJobExecutions(ctx, jobExecutionIdToStatusMap); err != nil {
-								log.Printf("An error occurred while updating job execution data %s", err.Error())
-								continue
-							}
-
-							newJobsIdsToPushToQueue = append(newJobsIdsToPushToQueue, job)
-							continue
-						}
-
-						if jobExecution.Status == database_constants.Todo {
-							newJobsIdsToPushToQueue = append(newJobsIdsToPushToQueue, job)
-							continue
-						}
-
-
-						if jobExecution.Status == database_constants.Retry && jobExecution.RetryCount > 0 {
-
-							newRetryCount := int(jobExecution.RetryCount - 1)
-
-							jobExecutionIdToStatusMap[jobExecution.ID] = dalcontracts.JobExecutionUpdate{
-								Status:     database_constants.Retry,
-								RetryCount: &newRetryCount,
-							}
-
-							if err = j.jobExecutionRepository.UpdateJobExecutions(ctx, jobExecutionIdToStatusMap); err != nil {
-								log.Printf("An error occurred while updating job execution data %s", err.Error())
-								continue
-							}
-
-							newJobsIdsToPushToQueue = append(newJobsIdsToPushToQueue, job)
-							continue
-						}
-
-					if jobExecution.Status == database_constants.Running {
-						executionIdInString := strconv.FormatUint(uint64(jobExecution.ID), 10)
-						workerInfo, err := j.redisQueries.GetValue(ctx, executionIdInString)
-						if err != nil {
-							log.Printf("An error occurred while fetching the key information %s", err.Error())
-							continue
-						}
-
-						healthCheckKey := helpers.BuildHealthCheckKey(workerInfo, executionIdInString)
-						isWorkerRunning, err := j.redisQueries.KeyExists(ctx, healthCheckKey)
-
-						if err != nil {
-							log.Printf("An error occurred while fetching the healthCheck info %s", err.Error())
-							continue
-						}
-
-						if isWorkerRunning {
-							log.Printf("Worker %s is already running for this job execution %s so ignoring to reschedule", workerInfo, executionIdInString)
-							continue
-						}
-
-						jobExecutionIdToStatusMap[jobExecution.ID] = dalcontracts.JobExecutionUpdate{
-							Status:  database_constants.Retry,
-							RetryAt: scheduledAtTime,
-						}
-
-						if err = j.jobExecutionRepository.UpdateJobExecutions(ctx, jobExecutionIdToStatusMap); err != nil {
-							log.Printf("An error occurred while updating job execution data %s", err.Error())
-							continue
-						}
-
-						deletedCount, err := j.redisQueries.DeleteKey(ctx, executionIdInString)
-						if err != nil {
-							log.Printf("An error occurred while deleting the job to worker mapping %s", err)
-							continue
-						}
-						if deletedCount == 0 {
-							log.Printf("No keys were deleted either the key %s never existed or the key was deleted earlier", executionIdInString)
-						}
-
-						newJobsIdsToPushToQueue = append(newJobsIdsToPushToQueue, job)
-						continue
-					}
-
-					continue
-				}
-			*/
-
-			// Schedule only if the job is a recurring job
+			//For recurring jobs create new execution
 			if jobMetaData.IsRecurringJob {
 				newJobsToExecute[job] = dalcontracts.JobExecutionCreationData{
 					Status:      string(database_constants.Todo),
 					ScheduledAt: scheduledAtTime,
 				}
-				//newJobsIdsToPushToQueue = append(newJobsIdsToPushToQueue, job)
 			}
 
 		} else {
@@ -214,25 +110,8 @@ func (j *jobSchedulingService) ScheduleJobs(ctx context.Context) error {
 				Status:      string(database_constants.Todo),
 				ScheduledAt: scheduledAtTime,
 			}
-			//newJobsIdsToPushToQueue = append(newJobsIdsToPushToQueue, job)
 		}
 	}
-
-	// Push the jobs to queue
-
-	/*
-		log.Printf("Starting to push the jobs into redis queue  %+v", newJobsIdsToPushToQueue)
-		for _, job := range newJobsIdsToPushToQueue {
-			jobInStr := strconv.FormatUint(uint64(job), 10)
-			queueErr := j.redisQueueCommands.LEnqueue(ctx, infra_constants.JobsQueue, jobInStr)
-			if queueErr != nil {
-				log.Printf("An error occurred while pushing the job %d to redis queue %s | Will retry to en-queue job in the next poll", job, queueErr)
-				// Removing from insert so that db and redis are consistent
-				delete(newJobsToExecute, job)
-			}
-		}
-		log.Printf("Completed pushing jobs to queue now inserting executions into database")
-	*/
 
 	return j.jobExecutionRepository.InsertNewJobExecutions(ctx, newJobsToExecute)
 }
