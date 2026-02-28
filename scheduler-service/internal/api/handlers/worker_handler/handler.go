@@ -83,3 +83,23 @@ func (h *WorkerHandler) ReportCompletion(c *gin.Context) {
 
 	c.Status(http.StatusOK)
 }
+
+func (h *WorkerHandler) ExtendLease(c *gin.Context){
+	id := c.Param("id")
+	execId, err := strconv.ParseUint(id, 10, 64)
+
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "invalid execution id",
+		})
+		return
+	}
+
+	err = h.svc.ExtendJobLease(c.Request.Context(), uint(execId))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.Status(http.StatusOK)
+}
