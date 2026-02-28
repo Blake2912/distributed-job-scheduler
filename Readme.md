@@ -134,3 +134,5 @@ Swagger documentation is available inside:
     active leader)
 -   Worker crashes are handled via TTL expiry
 -   Safe job leasing prevents duplicate execution
+
+.
