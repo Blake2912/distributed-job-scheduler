@@ -10,4 +10,5 @@ import (
 type JobRepository interface {
 	GetJobsToSchedule(ctx context.Context, currentTime time.Time) ([]models.Jobs, error)
 	CreateJobs(ctx context.Context, jobs []models.Jobs) error
+	GetJobById(ctx context.Context, id uint) (models.Jobs, error)
 }

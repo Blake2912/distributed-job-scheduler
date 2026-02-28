@@ -2,7 +2,10 @@ module github.com/Blake2912/distributed-job-scheduler/worker-service
 
 go 1.25.5
 
-require github.com/gin-gonic/gin v1.11.0
+require (
+	github.com/gin-gonic/gin v1.11.0
+	github.com/google/uuid v1.6.0
+)
 
 require (
 	github.com/bytedance/sonic v1.14.0 // indirect

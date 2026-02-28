@@ -10,7 +10,11 @@ import (
 
 type JobExecutionRepository interface {
 	GetLatestJobExecutions(ctx context.Context, jobIds []uint) ([]models.JobExecution, error)
-	InsertNewJobExecutions(ctx context.Context, jobIdToStatusMap map[uint]database_constants.JobExecutionStatus) error
+	InsertNewJobExecutions(ctx context.Context, jobIdToStatusMap map[uint]contracts.JobExecutionCreationData) error
 	GetJobExecutionInfoWithExecutionId(ctx context.Context, jobExecutionId uint) (models.JobExecution, error)
 	UpdateJobExecutions(ctx context.Context, jobExecutionUpdates map[uint]contracts.JobExecutionUpdate) error
+	GetJobAndMarkExecutionAsRunning(ctx context.Context) (*models.JobExecution, error)
+	UpdateJobExecutionStatus(ctx context.Context, execId uint, status database_constants.JobExecutionStatus) error
+	MarkExpiredLeasesAsRetry(ctx context.Context) error
+	ExtendLease(ctx context.Context, jobExecId uint) error
 }
