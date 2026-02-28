@@ -1,19 +1,36 @@
-# -------- Build stage --------
-FROM golang:1.25.5-alpine AS builder
+# Build stage
+FROM golang:1.22-alpine AS builder
 
 WORKDIR /app
 
-COPY worker/go.mod worker/go.sum ./
+# Copy go workspace files if using go.work (recommended for monorepo)
+COPY go.work ./
+COPY go.work.sum ./
+
+# Copy module files
+COPY worker-service/go.mod worker-service/go.sum ./worker-service/
+
+# Download dependencies
+WORKDIR /app/worker-service
 RUN go mod download
 
-COPY worker/ .
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o worker
-
-# -------- Runtime stage --------
-FROM gcr.io/distroless/base-debian12
-
+# Copy full source
 WORKDIR /app
-COPY --from=builder /app/worker .
+COPY . .
 
-USER nonroot:nonroot
+# Build worker binary
+WORKDIR /app/worker-service
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o worker cmd/main.go
+
+
+# Runtime stage
+FROM alpine:latest
+
+WORKDIR /root/
+
+# Install CA certificates (important for HTTPS calls)
+RUN apk --no-cache add ca-certificates
+
+COPY --from=builder /app/worker-service/worker .
+
 CMD ["./worker"]
