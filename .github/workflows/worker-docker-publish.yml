@@ -15,7 +15,7 @@ on:
       - "worker-service/**"
 
 jobs:
-  worker-dockerg:
+  worker-docker:
     runs-on: ubuntu-latest
 
     steps:
