@@ -65,3 +65,18 @@ func (s *Scheduler) Run(ctx context.Context) {
 		}
 	}
 }
+
+func (s *Scheduler) StartExpiryRecoveryLoop(ctx context.Context) {
+
+	ticker := time.NewTicker(60 * time.Second)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-ticker.C:
+			s.jobSchedulingService.RecoverExpiredLeases(ctx)
+		}
+	}
+}

@@ -10,4 +10,5 @@ func registerWorkerRoutes(r *gin.RouterGroup, c *container.Container) {
 
 	worker.POST("executions/lease", c.WorkerHandler.LeaseNextJob)
 	worker.POST("executions/:id/complete", c.WorkerHandler.ReportCompletion)
+	worker.POST("executions/:id/heartbeat", c.WorkerHandler.ExtendLease)
 }

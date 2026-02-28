@@ -15,4 +15,6 @@ type JobExecutionRepository interface {
 	UpdateJobExecutions(ctx context.Context, jobExecutionUpdates map[uint]contracts.JobExecutionUpdate) error
 	GetJobAndMarkExecutionAsRunning(ctx context.Context) (*models.JobExecution, error)
 	UpdateJobExecutionStatus(ctx context.Context, execId uint, status database_constants.JobExecutionStatus) error
+	MarkExpiredLeasesAsRetry(ctx context.Context) error
+	ExtendLease(ctx context.Context, jobExecId uint) error
 }

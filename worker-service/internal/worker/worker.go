@@ -76,6 +76,9 @@ func (w *Worker) executeJob(ctx context.Context, job *contracts.JobToExecute) {
 		return
 	}
 
+	//start heartbeat
+	go w.startHeartBeat(ctx, job.JobExecutionID)
+
 	err = exec.Execute(ctx, job.Payload)
 	if err != nil {
 		log.Printf("Job failed Exec_ID=%s Error=%v\n", execId, err)
@@ -92,6 +95,24 @@ func (w *Worker) executeJob(ctx context.Context, job *contracts.JobToExecute) {
 	reportErr := w.client.ReportCompletion(ctx, job.JobExecutionID, worker_constants.SUCCESS, "", false)
 	if reportErr != nil {
 		log.Println("Failed reporting success:", reportErr)
+	}
+}
+
+func (w *Worker) startHeartBeat(ctx context.Context, execId uint) {
+	ticker := time.NewTicker(worker_constants.LeaseDuration / 2)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-ctx.Done():
+			return
+
+		case <-ticker.C:
+			err := w.client.ExtendLease(ctx, execId)
+			if err != nil {
+				return
+			}
+		}
 	}
 }
 

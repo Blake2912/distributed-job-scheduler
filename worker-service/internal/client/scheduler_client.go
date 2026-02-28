@@ -10,6 +10,7 @@ import (
 type SchedulerClient interface {
 	LeaseJob(ctx context.Context) (*contracts.JobToExecute, error)
 	ReportCompletion(ctx context.Context, jobId uint, status string, executionError string, retryable bool) error
+	ExtendLease(ctx context.Context, execId uint) error
 }
 
 /*

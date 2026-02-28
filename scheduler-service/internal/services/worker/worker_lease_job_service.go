@@ -9,4 +9,5 @@ import (
 type WorkerLeaseJobService interface {
 	LeaseJob(ctx context.Context) (*contracts.JobToExecute, error)
 	CompleteJobExecution(ctx context.Context, jobExecId uint, request contracts.ReportCompletionRequest) error
+	ExtendJobLease(ctx context.Context, jobExecId uint) error
 }
