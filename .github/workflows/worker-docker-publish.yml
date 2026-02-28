@@ -3,13 +3,14 @@ name: Worker Docker CI/CD
 on:
   pull_request:
     branches:
-      - v1.0/docker-action-test
+      - master
+      - release/*
     paths:
       - "worker-service/**"
 
   push:
     branches:
-      - v1.0/docker-action-test
+      - master
     paths:
       - "worker-service/**"
 
