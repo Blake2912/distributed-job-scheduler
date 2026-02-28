@@ -74,6 +74,7 @@ func (svc *workerService) CompleteJobExecution(ctx context.Context, jobExecId ui
 			return svc.jobExecutionRepository.UpdateJobExecutions(ctx, map[uint]dalcontracts.JobExecutionUpdate{exec.ID: updatePayload})
 		}
 
+		//update comments with error payload
 		return svc.jobExecutionRepository.UpdateJobExecutionStatus(ctx, exec.ID, database_constants.Error)
 	}
 
@@ -90,4 +91,8 @@ func calculateBackoff(attempt int) time.Duration {
 	}
 
 	return delay
+}
+
+func (svc *workerService) ExtendJobLease(ctx context.Context, jobExecId uint) error {
+	return svc.jobExecutionRepository.ExtendLease(ctx, jobExecId)
 }

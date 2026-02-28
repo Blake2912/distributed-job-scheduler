@@ -189,9 +189,19 @@ func (r *JobExecutionRepository) UpdateJobExecutionStatus(ctx context.Context, e
 func (r *JobExecutionRepository) MarkExpiredLeasesAsRetry(ctx context.Context) error {
 	return r.db.WithContext(ctx).
 		Model(&models.JobExecution{}).
-		Where("status = 'RUNNING' AND lease_expiry < NOW()").
+		Where("status = ? AND lease_expiry < NOW()", database_constants.Running).
 		Updates(map[string]interface{}{
 			"status":   "RETRY",
 			"retry_at": time.Now(),
+		}).Error
+}
+
+func (r *JobExecutionRepository) ExtendLease(ctx context.Context, jobExecId uint) error {
+	leaseExpiry := time.Now().Add(worker_constants.LeaseDuration)
+	return r.db.WithContext(ctx).
+		Model(&models.JobExecution{}).
+		Where("id = ? AND status = ? AND lease_expiry > NOW()", jobExecId, database_constants.Running).
+		Updates(map[string]interface{}{
+			"lease_expiry": leaseExpiry,
 		}).Error
 }

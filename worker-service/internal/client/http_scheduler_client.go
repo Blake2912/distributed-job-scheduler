@@ -129,3 +129,35 @@ func (c *HTTPSchedulerClient) ReportCompletion(
 
 	return nil
 }
+
+func (c *HTTPSchedulerClient) ExtendLease(ctx context.Context, execId uint) error {
+	url := fmt.Sprintf(worker_constants.LeaseExtensionEndpoint, c.baseURL, strconv.FormatUint(uint64(execId), 10))
+
+	req, err := http.NewRequestWithContext(
+		ctx,
+		http.MethodPost,
+		url,
+		nil,
+	)
+
+	if err != nil {
+		return err
+	}
+
+	resp, err := c.httpClient.Do(req)
+
+	if err != nil {
+		return err
+	}
+
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf(
+			"lease extension failed with status %d",
+			resp.StatusCode,
+		)
+	}
+
+	return nil
+}
