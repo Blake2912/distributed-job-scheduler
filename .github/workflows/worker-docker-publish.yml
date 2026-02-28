@@ -23,7 +23,7 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      # PR validation build (no push)
+      # PR build (validate)
       - name: Build image (PR validation)
         if: github.event_name == 'pull_request'
         run: |
@@ -31,7 +31,7 @@ jobs:
             -f worker-service/Dockerfile \
             worker-service
 
-      # Login only on push
+      # Login for push
       - name: Login to Docker Hub
         if: github.event_name == 'push'
         uses: docker/login-action@v3
@@ -39,7 +39,7 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      # Build & tag image
+      # Build + tag for push
       - name: Build & Tag image
         if: github.event_name == 'push'
         run: |
@@ -49,7 +49,7 @@ jobs:
             -t ${{ secrets.DOCKERHUB_USERNAME }}/worker-service:${{ github.sha }} \
             worker-service
 
-      # Push image
+      # Push on push
       - name: Push image
         if: github.event_name == 'push'
         run: |
