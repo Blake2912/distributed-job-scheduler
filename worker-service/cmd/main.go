@@ -28,7 +28,7 @@ func main() {
 
 	container := container.BuildContainer(
 		httpClient,
-		"http://:8081", //proxy/scheduler URL
+		"http://:8080", //proxy/scheduler URL
 		3,              // no. of workers
 	)
 
