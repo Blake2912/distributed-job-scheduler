@@ -10,14 +10,28 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/Blake2912/distributed-job-scheduler/scheduler-service/docs"
+	_ "github.com/Blake2912/distributed-job-scheduler/scheduler-service/docs"
+	"github.com/Blake2912/distributed-job-scheduler/scheduler-service/eventbus"
+	"github.com/Blake2912/distributed-job-scheduler/scheduler-service/httpclient"
 	"github.com/Blake2912/distributed-job-scheduler/scheduler-service/internal/api/routes"
+	schedulerconfig "github.com/Blake2912/distributed-job-scheduler/scheduler-service/internal/config"
 	"github.com/Blake2912/distributed-job-scheduler/scheduler-service/internal/container"
+	"github.com/Blake2912/distributed-job-scheduler/scheduler-service/pod_library/client"
 	"github.com/Blake2912/distributed-job-scheduler/scheduler-service/redis_dal/redisclient"
+	"github.com/Blake2912/distributed-job-scheduler/scheduler-service/redis_dal/redissubscriber"
 	"github.com/Blake2912/distributed-job-scheduler/scheduler-service/sql_dal/config"
 	"github.com/gin-gonic/gin"
 	"github.com/redis/go-redis/v9"
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
 )
 
+// @title           Job Scheduler API
+// @version         1.0
+// @description     API for scheduler, image and worker spawning
+// @host            localhost:8081
+// @BasePath        /api
 func main() {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
@@ -42,18 +56,54 @@ func main() {
 	defer rdb.Close()
 	log.Println("Connected to redis")
 
+	httpClient := httpclient.New(120 * time.Minute)
+
+	k8sClient, err := client.New()
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	// Application startup
-	container := container.BuildContainer(config.DB)
+	// Future Improvmement: Move the parameters into a struct to make it readable if the parameters grows.
+	container := container.BuildContainer(config.DB, rdb, ctx, httpClient, k8sClient)
+
+	// Event bus
+	bus := eventbus.NewEventBus[eventbus.TTLExpiredEvent](500)
+
+	redissubscriber.PublishRedisKeyExpiryEvent(rdb, ctx, bus)
+	// Future improvment: Use DI
+	container.TTLExpiryConsumer.StartTTLExpiryExecution(ctx, bus)
 
 	//router
 	router := gin.Default()
-	router.GET("hello/", hello)
-	router.GET("helloRedis/", redisTest(rdb))
+
+	router.Use(func(c *gin.Context) {
+		if host := c.Request.Header.Get("X-Forwarded-Host"); host != "" {
+			c.Request.Host = host
+		}
+
+		if proto := c.Request.Header.Get("X-Forwarded-Proto"); proto != "" {
+			c.Request.URL.Scheme = proto
+		}
+
+		c.Next()
+	})
+
+	docs.SwaggerInfo.Host = ""
+	docs.SwaggerInfo.BasePath = "/api"
+	docs.SwaggerInfo.Schemes = []string{"http"}
+
+	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+
+	router.GET("/api/hello", hello)
+	router.GET("/api/helloRedis", redisTest(rdb))
 
 	routes.RegisterRoutes(router, container)
 
+	address := schedulerconfig.GetServerAddress()
+
 	srv := &http.Server{
-		Addr:    ":8081",
+		Addr:    address,
 		Handler: router,
 	}
 
@@ -62,6 +112,20 @@ func main() {
 			log.Fatal("Server error:", err)
 		}
 	}()
+
+	// Run leader election after the server has started and registered its routes
+	err = container.LeaderElector.Run(ctx, func(leaderCtx context.Context) {
+
+		//scheduler loop
+		go container.Scheduler.Run(leaderCtx)
+
+		//Recovery loop to mark executions with expired leases as Retry
+		go container.Scheduler.StartExpiryRecoveryLoop(leaderCtx)
+	})
+
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	<-ctx.Done()
 	log.Println("Shutdown signal received")
@@ -76,12 +140,26 @@ func main() {
 	log.Println("Server exited cleanly")
 }
 
+// Hello godoc
+// @Summary Health check
+// @Description Simple hello endpoint
+// @Tags system
+// @Produce json
+// @Success 200 {string} string
+// @Router /hello [get]
 func hello(c *gin.Context) {
 	msg := fmt.Sprintln("Hello")
 	c.IndentedJSON(http.StatusOK, msg)
 }
 
-// temp test
+// RedisTest godoc
+// @Summary Test Redis connection - TEMP
+// @Description Writes and reads a test key from Redis
+// @Tags system
+// @Produce json
+// @Success 200 {object} map[string]string
+// @Failure 500 {object} map[string]string
+// @Router /helloRedis [get]
 func redisTest(rdb *redis.Client) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		ctx := c.Request.Context()
