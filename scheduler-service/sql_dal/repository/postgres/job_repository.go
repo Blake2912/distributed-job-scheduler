@@ -20,8 +20,10 @@ func NewJobRepository(db *gorm.DB) repository.JobRepository {
 }
 
 func (j *JobRepository) GetJobsToSchedule(ctx context.Context, currentTime time.Time) ([]models.Jobs, error) {
+	currentTimeOfDay := currentTime.UTC().Format("15:04:05")
+
 	return gorm.G[models.Jobs](j.db).
-		Where("next_run_at <= ? AND enabled = ?", currentTime, true).
+		Where("next_run_at <= ? AND enabled = ?", currentTimeOfDay, true).
 		Find(ctx)
 }
 

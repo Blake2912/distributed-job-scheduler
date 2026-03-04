@@ -2,7 +2,6 @@ package jobsservice
 
 import (
 	"context"
-	"database/sql"
 	"encoding/json"
 	"log"
 	"time"
@@ -67,11 +66,7 @@ func prepareMetaDataForInsert(isRecurringJob bool) (string, error) {
 	return inString, err
 }
 
-func toNullTime(t time.Time) sql.NullTime {
-	if t.IsZero() {
-		return sql.NullTime{Valid: false}
-	}
-
+func toNullTime(t time.Time) string {
 	// strip date, keep only time
 	timeOnly := time.Date(0, 1, 1,
 		t.Hour(),
@@ -81,10 +76,7 @@ func toNullTime(t time.Time) sql.NullTime {
 		time.UTC,
 	)
 
-	return sql.NullTime{
-		Time:  timeOnly,
-		Valid: true,
-	}
+	return timeOnly.Format("15:04:05")
 }
 
 // View jobs
