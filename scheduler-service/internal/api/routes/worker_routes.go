@@ -7,8 +7,12 @@ import (
 
 func registerWorkerRoutes(r *gin.RouterGroup, c *container.Container) {
 	worker := r.Group("/worker")
-
-	worker.POST("executions/lease", c.WorkerHandler.LeaseNextJob)
-	worker.POST("executions/:id/complete", c.WorkerHandler.ReportCompletion)
-	worker.POST("executions/:id/heartbeat", c.WorkerHandler.ExtendLease)
+	{
+		executions := worker.Group("/executions")
+		{
+			executions.POST("/lease", c.WorkerHandler.LeaseNextJob)
+			executions.POST("/:id/complete", c.WorkerHandler.ReportCompletion)
+			executions.POST("/:id/heartbeat", c.WorkerHandler.ExtendLease)
+		}
+	}
 }

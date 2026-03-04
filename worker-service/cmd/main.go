@@ -28,7 +28,7 @@ func main() {
 
 	container := container.BuildContainer(
 		httpClient,
-		"http://:8080", //TO-DO :- correct proxy URL
+		"http://:8081", //proxy/scheduler URL
 		3,              // no. of workers
 	)
 
@@ -37,9 +37,11 @@ func main() {
 	container.App.Run(ctx)
 
 	log.Println("Worker service stopped")
-	router := gin.Default()
-	router.GET("/hello", hello)
-	router.Run(":8080")
+	/*
+		router := gin.Default()
+		router.GET("/hello", hello)
+		router.Run(":8082")
+	*/
 }
 
 func hello(c *gin.Context) {

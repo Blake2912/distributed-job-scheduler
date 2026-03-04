@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"log"
+	"strconv"
 	"time"
 
 	"github.com/Blake2912/distributed-job-scheduler/common/contracts"
@@ -38,17 +39,18 @@ func NewJobSchedulingService(
 
 func (j *jobSchedulingService) ScheduleJobs(ctx context.Context) error {
 
-	t := time.Now().In(time.UTC)
+	today := time.Now().UTC()
 
-	timeOnly := time.Date(0, 1, 1,
-		t.Hour(),
-		t.Minute(),
-		t.Second(),
-		t.Nanosecond(),
-		time.UTC,
-	)
+	/*
+		timeOnly := time.Date(0, 1, 1,
+			t.Hour(),
+			t.Minute(),
+			t.Second(),
+			t.Nanosecond(),
+			time.UTC,
+		)*/
 	// Pick jobs to process
-	validJobs, error := j.jobRepository.GetJobsToSchedule(ctx, timeOnly)
+	validJobs, error := j.jobRepository.GetJobsToSchedule(ctx, today)
 	if error != nil {
 		log.Printf("An error occurred while quering jobs data %s \n", error.Error())
 		return error
@@ -82,7 +84,7 @@ func (j *jobSchedulingService) ScheduleJobs(ctx context.Context) error {
 	newJobsToExecute := make(map[uint]dalcontracts.JobExecutionCreationData, len(validJobIds))
 
 	for _, job := range validJobIds {
-		_, execFound := latestExecutionsMap[job]
+		jobExecution, execFound := latestExecutionsMap[job]
 		jobInfo := validJobsMap[job]
 
 		var jobMetaData contracts.JobMetaDataContract
@@ -94,9 +96,15 @@ func (j *jobSchedulingService) ScheduleJobs(ctx context.Context) error {
 			continue
 		}
 
-		scheduledAtTime := GetScheduledAtTime(jobInfo.NextRunAt.Time)
+		scheduledAtTime := GetScheduledAtTime(jobInfo.NextRunAt)
 
 		if execFound {
+			createdAt := jobExecution.CreatedAt
+			if today.Year() == createdAt.Year() && today.YearDay() == createdAt.YearDay() {
+				//execution has already been created
+				continue
+			}
+
 			//For recurring jobs create new execution
 			if jobMetaData.IsRecurringJob {
 				newJobsToExecute[job] = dalcontracts.JobExecutionCreationData{
@@ -113,10 +121,22 @@ func (j *jobSchedulingService) ScheduleJobs(ctx context.Context) error {
 		}
 	}
 
+	if len(newJobsToExecute) == 0 {
+		log.Println("No new jobs to schedule.")
+		return nil
+	}
+
+	log.Printf("Scheduling %s jobs.", strconv.Itoa(len(newJobsToExecute)))
+
 	return j.jobExecutionRepository.InsertNewJobExecutions(ctx, newJobsToExecute)
 }
 
-func GetScheduledAtTime(runTime time.Time) time.Time {
+func GetScheduledAtTime(t string) time.Time {
+	runTime, err := time.Parse("15:04:05", t)
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	now := time.Now()
 	year, month, day := now.Date()
 

@@ -168,6 +168,7 @@ func (r *JobExecutionRepository) GetJobAndMarkExecutionAsRunning(ctx context.Con
 			"status":        database_constants.Running,
 			"lease_expiry":  leaseExpiry,
 			"attempt_count": gorm.Expr("attempt_count + 1"),
+			"started_at":    time.Now(),
 		}).Error
 
 	if err != nil {
@@ -183,7 +184,10 @@ func (r *JobExecutionRepository) GetJobAndMarkExecutionAsRunning(ctx context.Con
 func (r *JobExecutionRepository) UpdateJobExecutionStatus(ctx context.Context, execId uint, status database_constants.JobExecutionStatus) error {
 	return r.db.Model(&models.JobExecution{}).
 		Where("id = ?", execId).
-		Update("status", status).Error
+		Updates(map[string]interface{}{
+			"status":       status,
+			"completed_at": time.Now(),
+		}).Error
 }
 
 func (r *JobExecutionRepository) MarkExpiredLeasesAsRetry(ctx context.Context) error {
