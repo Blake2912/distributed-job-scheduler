@@ -1,12 +1,14 @@
-import { ArrowForward, CalendarMonthOutlined } from "@mui/icons-material";
-
+"use-client";
+import { ArrowForward, CalendarTodayOutlined } from "@mui/icons-material";
 export function Hero() {
   return (
     <div className="relative overflow-hidden bg-linear-to-b from-blue-50 to-white">
       <div className="mx-auto max-w-7xl px-6 py-24 sm:py-32 lg:px-8">
         <div className="mx-auto max-w-2xl text-center">
           <div className="mb-8 inline-flex items-center gap-2 rounded-full bg-blue-100 px-4 py-2 text-sm text-blue-700">
-            <CalendarMonthOutlined className="h-4 w-4" />
+            <span className="flex">
+              <CalendarTodayOutlined className="h-4 w-4" />
+            </span>
             Simple. Powerful. Reliable.
           </div>
           <h1 className="mb-6 text-5xl font-bold tracking-tight text-gray-900 sm:text-7xl">
