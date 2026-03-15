@@ -1,3 +1,4 @@
+"use-client";
 import { CalendarMonth } from "@mui/icons-material";
 
 export function Footer() {
